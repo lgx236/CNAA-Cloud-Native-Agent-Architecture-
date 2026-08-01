@@ -12,6 +12,21 @@ Tool categories:
 - State tools: get/update/delete state entries
 - Preference tools: get/update/delete preferences
 - Environment tools: get/update environment context
+
+IMPLEMENTED:
+    - 13 MCP tool definitions with name, description, inputSchema
+    - Tool name constants for type-safe references
+    - Registry functions: get_tool_definitions, get_tool_by_name, get_tool_names
+    - Schema reuse from cnaa.schemas (no duplication)
+    - Tool descriptions explain purpose and usage context
+
+TODO (algorithm extension point):
+    - Add tool versioning for backward compatibility
+    - Add tool capability negotiation (server tells client which tools are available)
+    - Add tool parameter validation before execution
+    - Add tool result schema definitions (currently implicit)
+    - Add tool grouping/categorization metadata
+    - Add tool deprecation markers for future interface changes
 """
 
 from __future__ import annotations

@@ -144,6 +144,19 @@ class CNAA_MCPServer:
         return get_tool_definitions()
     
     # --- Memory Tool Handlers ---
+    #
+    # IMPLEMENTED:
+    #   - store_memory: Extract args → build Memory model → delegate to store
+    #   - get_memory: Lookup by (agent_id, memory_id) → serialize to JSON
+    #   - list_memories: Parse optional type/tags filters → delegate → serialize summaries
+    #   - tag_short_term: Pass-through to store (in-memory: no-op)
+    #   - delete_memory: Delegate to store
+    #
+    # TODO (algorithm extension point):
+    #   - Add content validation before storing (size limits, format checks)
+    #   - Add memory deduplication detection (content hash comparison)
+    #   - Add automatic tagging based on content analysis
+    #   - Add batch store/list for multiple memories in one call
     
     def _handle_store_memory(self, args: dict[str, Any]) -> dict[str, Any]:
         """Handle cnaa_store_memory tool call."""
@@ -214,6 +227,16 @@ class CNAA_MCPServer:
         return self.memory_store.delete_memory(args["agent_id"], args["memory_id"])
     
     # --- State Tool Handlers ---
+    #
+    # IMPLEMENTED:
+    #   - get_state: Retrieve all states for agent → serialize with category enum
+    #   - update_state: Extract args → build State model → delegate to store (upsert)
+    #   - delete_state: Remove by (agent_id, state_id) composite key
+    #
+    # TODO (algorithm extension point):
+    #   - Add state conflict resolution for concurrent updates
+    #   - Add state diff computation for change tracking
+    #   - Add category-based access control
     
     def _handle_get_state(self, args: dict[str, Any]) -> dict[str, Any]:
         """Handle cnaa_get_state tool call."""
@@ -246,6 +269,16 @@ class CNAA_MCPServer:
         return self.state_store.delete_state(args["agent_id"], args["state_id"])
     
     # --- Preference Tool Handlers ---
+    #
+    # IMPLEMENTED:
+    #   - get_preference: Retrieve all preferences for agent → serialize
+    #   - update_preference: Extract args + optional importance/source → upsert
+    #   - delete_preference: Remove by (agent_id, preference_id)
+    #
+    # TODO (algorithm extension point):
+    #   - Add importance-based sorting/filtering
+    #   - Add preference merging when same key updated from different sources
+    #   - Add source_memory_ids tracking for preference lineage
     
     def _handle_get_preference(self, args: dict[str, Any]) -> dict[str, Any]:
         """Handle cnaa_get_preference tool call."""
@@ -283,6 +316,15 @@ class CNAA_MCPServer:
         )
     
     # --- Environment Tool Handlers ---
+    #
+    # IMPLEMENTED:
+    #   - get_environment: Lookup by agent_id → serialize context
+    #   - update_environment: Extract args → build Environment model → upsert
+    #
+    # TODO (algorithm extension point):
+    #   - Add environment snapshot history (keep last N versions)
+    #   - Add environment change detection (diff old vs new context)
+    #   - Add automatic environment refresh from agent context
     
     def _handle_get_environment(self, args: dict[str, Any]) -> dict[str, Any]:
         """Handle cnaa_get_environment tool call."""

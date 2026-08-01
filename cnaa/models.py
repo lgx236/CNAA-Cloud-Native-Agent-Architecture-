@@ -11,6 +11,20 @@ Key concepts:
 - Preference: Agent important memory patterns (shape behavior)
 - Environment: Agent environment context
 - InstantMemory: Local short-term memory with cloud reference pointer
+
+IMPLEMENTED:
+    - All data models as Python dataclasses with type annotations
+    - Open JSON content fields (dict[str, Any]) — dumb service principle
+    - Auto-timestamp via __post_init__ for Memory, State, Environment
+    - Enum types for MemoryType, MemoryStatus, StateCategory
+    - MemorySummary and SearchResult for lightweight query results
+
+TODO (algorithm extension point):
+    - Add to_dict() / from_dict() serialization methods for each model
+    - Add model validation (required fields, value ranges)
+    - Add content hashing for deduplication detection
+    - Add model migration support for schema evolution
+    - Add compression support for large content fields
 """
 
 from __future__ import annotations
@@ -76,6 +90,20 @@ class Memory:
 
     The content field is an open JSON structure — CNAA does not
     interpret or reason about memory content (dumb service principle).
+
+    IMPLEMENTED:
+        - Composite identity: (agent_id, memory_id) uniquely identifies a memory
+        - Type discriminator: MemoryType determines storage location
+        - Open content: dict[str, Any] allows arbitrary memory data
+        - Tags: list[str] for categorization and filtering
+        - completion_score: float [0.0, 1.0] tracks task progress
+        - Auto-timestamp: set to now() if not provided
+
+    TODO (algorithm extension point):
+        - Add content size limit enforcement
+        - Add content type detection (text/binary/structured)
+        - Add embedding field for semantic search (vector[float])
+        - Add parent_memory_id for memory versioning/lineage
     """
 
     memory_id: str
@@ -102,6 +130,16 @@ class TaskCheckpoint:
 
     Flow: Agent completes task point → compresses into checkpoint →
     full data stored in cloud, summary kept as instant memory locally.
+
+    IMPLEMENTED:
+        - Dual representation: full Memory (cloud) + summary (local)
+        - completion_score: tracks how much of the task is done
+        - Auto-timestamp for checkpoint creation time
+
+    TODO (algorithm extension point):
+        - Add compression strategy interface (summary generation algorithm)
+        - Add checkpoint diff for incremental task progress
+        - Add checkpoint chain linking (prev_checkpoint_id)
     """
 
     task_id: str
@@ -188,6 +226,17 @@ class InstantMemory:
     - active:    Full summary available locally
     - condensed: Reduced to index pointer, pull full data via cnaa_ref
     - evicted:   Removed from local context
+
+    IMPLEMENTED:
+        - Status lifecycle tracking via MemoryStatus enum
+        - cnaa_ref: cloud pointer for lazy loading full memory
+        - summary: lightweight text for local context window
+
+    TODO (algorithm extension point):
+        - Add condensation algorithm (summarize → shrink → evict)
+        - Add relevance scoring for automatic eviction priority
+        - Add context window budget management
+        - Add automatic condensation triggers based on memory age
     """
 
     memory_id: str

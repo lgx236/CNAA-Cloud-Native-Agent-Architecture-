@@ -7,6 +7,19 @@ are implemented. Cloud and local modules provide reference implementations.
 Key interfaces:
 - MemoryInterface: Memory operation contract (store/get/list/tag/delete)
 - StateInterface: State operation contract (get/update/delete for state/preference/environment)
+
+IMPLEMENTED:
+    - Abstract interface definitions using ABC/abstractmethod
+    - Full type annotations for all parameters and return types
+    - Docstrings specifying the dumb service contract (JSON in/out, no reasoning)
+    - Two orthogonal interfaces: MemoryInterface (experience) + StateInterface (state)
+
+TODO (algorithm extension point):
+    - Add async variants (AsyncMemoryInterface, AsyncStateInterface)
+    - Add batch operation methods (store_memories, get_memories_bulk)
+    - Add streaming interface for large memory retrieval
+    - Add query builder pattern for complex memory searches
+    - Add versioning/optimistic locking for concurrent state updates
 """
 
 from __future__ import annotations
@@ -34,6 +47,20 @@ class MemoryInterface(ABC):
     Defines the contract for storing, retrieving, and managing
     experience memories. Implementations must follow the dumb service
     principle: JSON in, JSON out, no reasoning.
+
+    IMPLEMENTED:
+        - 5 abstract methods covering full memory CRUD lifecycle
+        - store_memory: Write memory (long-term → cloud, short-term → local)
+        - get_memory: Read single memory by (agent_id, memory_id) composite key
+        - list_memories: Query with optional type/tag filters
+        - tag_short_term: Apply labels to recent memories
+        - delete_memory: Remove memory by ID
+
+    TODO (algorithm extension point):
+        - Add search_memories(query, top_k) for semantic retrieval
+        - Add get_similar(memory_id, threshold) for experience matching
+        - Add condense(agent_id, strategy) for memory compression
+        - Add memory lifecycle hooks (on_store, on_retrieve, on_expire)
     """
 
     @abstractmethod
@@ -133,6 +160,19 @@ class StateInterface(ABC):
     - State: Accumulated knowledge from experiences
     - Preference: Important memory patterns that shape behavior
     - Environment: Context information for agent operation
+
+    IMPLEMENTED:
+        - 9 abstract methods covering 3 state categories (State/Preference/Environment)
+        - Each category: get (read all) + update (upsert) + delete (remove)
+        - Environment: get (read) + update (upsert) only — no delete (always present)
+        - All methods keyed by agent_id for multi-tenant isolation
+
+    TODO (algorithm extension point):
+        - Add state evolution hooks (before_update, after_update, on_conflict)
+        - Add state diff/merge for cross-device state synchronization
+        - Add state versioning with rollback capability
+        - Add preference importance decay over time
+        - Add environment auto-refresh based on agent context
     """
 
     # --- State (Knowledge) ---

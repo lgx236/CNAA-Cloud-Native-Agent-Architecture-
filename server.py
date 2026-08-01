@@ -15,6 +15,27 @@ Usage:
 
 Example:
     python server.py --host 0.0.0.0 --port 8080
+
+IMPLEMENTED:
+    - HTTP server using Python stdlib (http.server)
+    - 3 endpoints: /schemas (GET), /mcp (POST), /health (GET)
+    - JSON request/response handling
+    - MCP tool call routing to CNAA_MCPServer
+    - Graceful shutdown on KeyboardInterrupt
+    - Configurable host/port via CLI arguments
+
+TODO (production):
+    - Add WSGI/ASGI server (gunicorn/uvicorn) for production deployment
+    - Add request authentication (API key, JWT)
+    - Add CORS headers for browser-based clients
+    - Add request logging middleware
+    - Add graceful timeout handling
+
+TODO (algorithm extension point):
+    - Add request batching for multiple MCP calls in one HTTP request
+    - Add response compression (gzip) for large payloads
+    - Add connection pooling for downstream storage backends
+    - Add rate limiting per agent_id or IP
 """
 
 from __future__ import annotations
@@ -44,6 +65,19 @@ class CNAARequestHandler(BaseHTTPRequestHandler):
     - GET /schemas: Get all interface schemas
     - POST /mcp: Handle MCP tool calls
     - GET /health: Health check
+
+    IMPLEMENTED:
+        - Path-based routing via do_GET/do_POST dispatch
+        - JSON request body parsing with Content-Length handling
+        - MCP tool extraction: reads 'tool' and 'arguments' from request
+        - Error responses with proper HTTP status codes
+        - Logging override to use Python logging module
+
+    TODO (algorithm extension point):
+        - Add request validation (schema validation for MCP arguments)
+        - Add request timing metrics
+        - Add content negotiation (Accept header handling)
+        - Add streaming responses for large result sets
     """
     
     # Class-level server reference
@@ -75,7 +109,21 @@ class CNAARequestHandler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, {"status": "healthy"})
     
     def _handle_mcp(self) -> None:
-        """Handle POST /mcp - MCP tool calls."""
+        """Handle POST /mcp - MCP tool calls.
+        
+        IMPLEMENTED:
+            - Parse JSON request body
+            - Extract 'tool' name and 'arguments' dict
+            - Delegate to CNAA_MCPServer.handle_tool_call()
+            - Return JSON response with proper status codes
+            - Error handling for malformed JSON and missing fields
+        
+        TODO (algorithm extension point):
+            - Add request schema validation before routing
+            - Add agent_id-based authorization check
+            - Add request/response size limits
+            - Add timeout for long-running tool calls
+        """
         try:
             content_length = int(self.headers.get("Content-Length", 0))
             body = self.rfile.read(content_length)

@@ -10,6 +10,20 @@ Schema categories:
 - Request schemas: What local sends to cloud
 - Response schemas: What cloud returns to local
 - Data schemas: Common data structure definitions
+
+IMPLEMENTED:
+    - All JSON schemas as Python dict constants (single source of truth)
+    - Schema registry functions (get_all_schemas, get_schema, etc.)
+    - Separation into request/response/data schema categories
+    - Required field validation via 'required' arrays
+    - Type constraints via JSON Schema 'type' and 'enum'
+
+TODO (algorithm extension point):
+    - Add schema versioning for backward compatibility
+    - Add schema validation utility (validate dict against schema)
+    - Add schema-to-Python-model code generation
+    - Add OpenAPI/Swagger export for HTTP API documentation
+    - Add schema diff tooling for tracking interface changes
 """
 
 from __future__ import annotations
