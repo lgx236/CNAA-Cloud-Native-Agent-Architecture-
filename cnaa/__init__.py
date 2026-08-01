@@ -37,7 +37,6 @@ from cnaa.schemas import (
     get_request_schemas,
     get_response_schemas,
     get_schema,
-    get_tool_definitions as get_schema_definitions,
 )
 
 # Interaction interfaces
@@ -49,7 +48,6 @@ from cnaa.lifecycle import (
     LifecycleConfig,
     LifecycleEvent,
     LifecyclePlugins,
-    MemoryLifecycleManager,
     MemoryLifecyclePlugin,
     RetrievalPlugin,
     StateEvolutionPhase,
@@ -84,7 +82,6 @@ __all__ = [
     "get_request_schemas",
     "get_response_schemas",
     "get_schema",
-    "get_schema_definitions",
     # Interaction interfaces
     "MemoryInterface",
     "StateInterface",
@@ -93,7 +90,6 @@ __all__ = [
     "LifecycleConfig",
     "LifecycleEvent",
     "LifecyclePlugins",
-    "MemoryLifecycleManager",
     "MemoryLifecyclePlugin",
     "RetrievalPlugin",
     "StateEvolutionPhase",

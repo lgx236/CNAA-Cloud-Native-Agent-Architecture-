@@ -1,0 +1,9 @@
+schema_version: 1
+module_path: ""
+title: CNAA 项目根目录与文档入口
+scope:
+    - README.md
+    - README_CN.md
+source_files: []
+depends_on: []
+related_to: []
