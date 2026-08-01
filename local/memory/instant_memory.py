@@ -30,6 +30,19 @@ class InstantMemoryManager:
     - active: Available for use
     - condensed: Reduced to index pointer, full data in cloud
     - evicted: Removed from local context
+
+    IMPLEMENTED:
+        - CRUD: create/get/list/delete instant memories
+        - Status transitions: active → condensed → evicted
+        - condense_old_memories: time-based condensation
+        - evict_condensed: remove old condensed memories
+        - get_active_memories: filter by ACTIVE status
+
+    TODO (algorithm extension point):
+        - Add importance-based condensation (prioritize high-value memories)
+        - Add usage-based eviction (keep frequently accessed memories)
+        - Add memory compression for large summaries
+        - Add integration with MemoryLifecyclePlugin
     
     Example:
         ```python

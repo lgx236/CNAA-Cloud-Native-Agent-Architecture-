@@ -5,6 +5,20 @@ integrate long-term memory capabilities via CNAA.
 
 This is the main entry point for any agentic system that wants to give
 its agents persistent experience memory across sessions.
+
+IMPLEMENTED:
+    - LocalAgentInterface: unified API combining 3 local components
+    - Memory operations: store/get/list/delete via MCP client to cloud
+    - Instant memory: local CRUD with status transitions
+    - State cache: per-type TTL-based caching (states/preferences/environment)
+    - Cache invalidation: clear all on update operations
+
+TODO (algorithm extension point):
+    - Integrate MemoryLifecyclePlugin for automatic condensation/eviction
+    - Integrate RetrievalPlugin for semantic search over memories
+    - Support selective cache invalidation (only invalidate affected type)
+    - Add background sync between local and cloud
+    - Add conflict resolution for concurrent updates
 """
 
 from __future__ import annotations

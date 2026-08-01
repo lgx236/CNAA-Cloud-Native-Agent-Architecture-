@@ -8,6 +8,23 @@ Key interfaces:
 - MemoryLifecyclePlugin: For custom memory condensation/eviction strategies
 - StateEvolutionPlugin: For custom state evolution rules
 - RetrievalPlugin: For custom retrieval strategies (vector, BM25, hybrid)
+
+IMPLEMENTED:
+    - LifecycleEvent enum: 5 lifecycle transition events
+    - LifecycleConfig dataclass: configurable thresholds (time, score)
+    - MemoryLifecyclePlugin ABC: 5 abstract methods (condense/evict/promote)
+    - TimeBasedLifecyclePlugin: default time-based implementation
+    - RetrievalPlugin ABC: 4 abstract methods (index/search/recall/delete)
+    - StateEvolutionPlugin ABC: 3 abstract methods (rules/should_evolve/evolve)
+    - DefaultStateEvolutionPlugin: default no-op implementation
+    - LifecyclePlugins registry: plugin holder with registration methods
+
+TODO (algorithm extension point):
+    - Add plugin discovery mechanism (auto-register from entry points)
+    - Add plugin chaining (compose multiple plugins in pipeline)
+    - Add lifecycle event hooks and observers
+    - Add plugin health monitoring and metrics
+    - Add hot-reload support for plugin updates without restart
 """
 
 from __future__ import annotations
@@ -76,6 +93,20 @@ class MemoryLifecyclePlugin(ABC):
 
     Implement this interface to provide custom memory condensation,
     eviction, and promotion strategies.
+
+    IMPLEMENTED:
+        - 5 abstract methods defining the memory lifecycle contract
+        - should_condense: check if instant memory should be compressed
+        - should_evict: check if condensed memory should be removed
+        - condense_memory: compress instant memory to index pointer
+        - evict_memory: remove condensed memory from local context
+        - should_promote_to_long_term: check if short-term → long-term
+
+    TODO (algorithm extension point):
+        - Add on_memory_stored hook for post-store processing
+        - Add batch condensation/eviction methods
+        - Add memory priority scoring
+        - Add custom trigger conditions beyond time/score
 
     Example implementations:
     - TimeBasedLifecyclePlugin: Based on time thresholds
@@ -235,6 +266,19 @@ class RetrievalPlugin(ABC):
     External packages (RAG, vector DB, knowledge graphs) should implement
     this interface to integrate with CNAA.
 
+    IMPLEMENTED:
+        - 4 abstract methods defining the retrieval contract
+        - index: index a memory for later retrieval
+        - search: query-based memory search with filters
+        - recall: context-based memory recall
+        - delete: remove a memory from the index
+
+    TODO (algorithm extension point):
+        - Add reindex method for bulk index rebuild
+        - Add similarity search with configurable distance metrics
+        - Add hybrid search combining multiple retrieval strategies
+        - Add retrieval result caching
+
     Example implementations:
     - VectorRetrievalPlugin: Using embeddings + ANN search
     - BM25RetrievalPlugin: Full-text search
@@ -334,6 +378,18 @@ class StateEvolutionPlugin(ABC):
 
     Implement this interface to provide custom state evolution rules.
     External packages can implement domain-specific evolution strategies.
+
+    IMPLEMENTED:
+        - 3 abstract methods defining the evolution contract
+        - get_evolution_rules: return list of transition rules
+        - should_evolve: check if state should transition to next phase
+        - evolve: perform the state transition
+
+    TODO (algorithm extension point):
+        - Add rollback support for failed evolutions
+        - Add evolution history tracking
+        - Add conditional evolution based on state content analysis
+        - Add batch evolution for related states
 
     Example implementations:
     - FrequencyBasedEvolutionPlugin: Based on access frequency
@@ -461,6 +517,17 @@ class LifecyclePlugins:
     """Registry for lifecycle plugins.
 
     Holds references to all pluggable lifecycle components.
+
+    IMPLEMENTED:
+        - Holds memory_lifecycle, retrieval, state_evolution plugins
+        - Default factories: TimeBasedLifecyclePlugin, DefaultStateEvolutionPlugin
+        - 3 registration methods for each plugin type
+
+    TODO (algorithm extension point):
+        - Add plugin priority ordering
+        - Add plugin health checks
+        - Add dynamic plugin loading from configuration
+        - Add plugin metrics and monitoring
     """
 
     memory_lifecycle: MemoryLifecyclePlugin = field(

@@ -21,6 +21,18 @@ class InMemoryMemoryStore(MemoryInterface):
     
     Stores memories in a dictionary keyed by (agent_id, memory_id).
     Suitable for testing and development.
+
+    IMPLEMENTED:
+        - Dict-based CRUD: store/get/delete with O(1) lookup by composite key
+        - list_memories: linear scan with optional type/tag filters — O(n)
+        - tag_short_term: no-op for in-memory (all memories are local)
+        - Auto-timestamp on store via Memory model __post_init__
+
+    TODO (algorithm extension point):
+        - Replace with persistent storage (SQLite, PostgreSQL)
+        - Add indexing for efficient tag/type queries
+        - Add content hashing for deduplication detection
+        - Add pagination for large result sets
     """
     
     def __init__(self) -> None:

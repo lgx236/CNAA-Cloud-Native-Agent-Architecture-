@@ -5,6 +5,20 @@ CNAA cloud server. This is a convenience wrapper around the MCP server
 for direct Python usage.
 
 For MCP protocol usage, agentic frameworks should use the MCP tools directly.
+
+IMPLEMENTED:
+    - CloudAgentInterface class wrapping CNAA_MCPServer
+    - 10 convenience methods: store/get/list memories, get/update states,
+      get/update preferences, get/update environment
+    - Each method marshals arguments and delegates to handle_tool_call()
+    - Time complexity: O(1) per call (routing only)
+
+TODO (algorithm extension point):
+    - Add batch operations (store/list multiple memories at once)
+    - Add caching layer for frequently accessed memories
+    - Add bulk search/filter capabilities
+    - Add async method variants for concurrent access
+    - Add connection health check and auto-reconnect
 """
 
 from __future__ import annotations

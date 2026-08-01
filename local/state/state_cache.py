@@ -22,6 +22,21 @@ class StateCache:
     
     Caches State, Preference, and Environment objects locally
     to reduce network calls and improve access speed.
+
+    IMPLEMENTED:
+        - TTL-based cache invalidation per data type
+        - Separate loaded flags for states, preferences, environment
+        - update_states/preferences/environment: store + mark loaded
+        - get_states/preferences/environment: return cached or empty
+        - is_expired: check if any loaded type has exceeded TTL
+        - clear_all: reset all cached data and loaded flags
+
+    TODO (algorithm extension point):
+        - Add per-item TTL (states may expire differently than preferences)
+        - Add stale-while-revalidate pattern
+        - Add usage-based invalidation (keep hot items longer)
+        - Add LRU eviction for large caches
+        - Add persistent cache (survive process restart)
     
     Example:
         ```python

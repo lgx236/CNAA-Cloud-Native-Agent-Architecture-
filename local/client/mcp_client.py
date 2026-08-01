@@ -30,6 +30,19 @@ class CNAA_MCPClient:
     Note: This is a reference implementation that simulates MCP communication.
     In production, use the official MCP Python SDK with proper transport
     (stdio, HTTP, etc.).
+
+    IMPLEMENTED:
+        - 13 tool methods matching all CNAA MCP tools
+        - Mock handler support for testing (set_mock_handler)
+        - _call_tool routing: delegates to mock handler or raises
+        - Argument marshalling for each tool call
+
+    TODO (algorithm extension point):
+        - Add real MCP transport (HTTP, stdio) via MCP Python SDK
+        - Add connection pooling and keep-alive
+        - Add retry logic with exponential backoff
+        - Add circuit breaker for fault tolerance
+        - Add request batching for multiple tool calls
     
     Example:
         ```python

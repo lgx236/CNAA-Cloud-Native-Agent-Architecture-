@@ -19,6 +19,19 @@ class InMemoryStateStore(StateInterface):
     """In-memory implementation of StateInterface.
     
     Stores states, preferences, and environments in dictionaries.
+
+    IMPLEMENTED:
+        - Three separate dicts for states, preferences, environments
+        - States keyed by (agent_id, state_id), preferences by (agent_id, preference_id)
+        - Environments keyed by agent_id (one per agent)
+        - Upsert semantics: update overwrites existing entries
+        - All operations are O(1) for single-item, O(n) for list
+
+    TODO (algorithm extension point):
+        - Replace with persistent storage (SQLite, PostgreSQL)
+        - Add secondary indexes for efficient agent_id queries
+        - Add transaction support for atomic multi-item updates
+        - Add optimistic locking for concurrent access
     """
     
     def __init__(self) -> None:
