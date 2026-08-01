@@ -5,6 +5,11 @@ This client handles the MCP protocol communication with the cloud server.
 
 Note: This is a reference implementation. In production, use the official
 MCP Python SDK for proper protocol handling.
+
+Algorithm responsibilities:
+- IMPLEMENTED: Tool call marshalling, mock handler for testing
+- TODO (production): Real MCP transport (HTTP, stdio), connection pooling
+- TODO (algorithm): Request batching, retry logic, circuit breaker
 """
 
 from __future__ import annotations
@@ -74,6 +79,17 @@ class CNAA_MCPClient:
     
     def _call_tool(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         """Call an MCP tool on the cloud server.
+        
+        IMPLEMENTED:
+            Routes tool call to mock handler (for testing) or logs warning.
+            Returns JSON response dict.
+            Time complexity: O(1) for routing.
+        
+        TODO (production):
+            - Implement real MCP transport (HTTP POST, stdio)
+            - Add request timeout handling
+            - Add retry logic with exponential backoff
+            - Add connection pooling
         
         Args:
             tool_name: Name of the tool to call

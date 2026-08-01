@@ -2,6 +2,11 @@
 
 Reference implementation of state storage using in-memory dictionaries.
 Stores State, Preference, and Environment objects.
+
+Algorithm responsibilities:
+- IMPLEMENTED: Dict-based CRUD for states, preferences, environments
+- TODO (production): Replace with persistent storage (SQLite, PostgreSQL)
+- TODO (algorithm): Add indexing for efficient agent_id queries
 """
 
 from typing import Any
@@ -26,6 +31,15 @@ class InMemoryStateStore(StateInterface):
     
     def get_state(self, agent_id: str) -> list[State]:
         """Get all states for an agent.
+        
+        IMPLEMENTED:
+            Linear scan of all states, filtering by agent_id.
+            Time complexity: O(n) where n = total states.
+        
+        TODO (algorithm extension point):
+            - Add index on agent_id for O(1) lookup
+            - Support category filtering
+            - Support pagination
         
         Args:
             agent_id: Agent identifier
@@ -71,6 +85,15 @@ class InMemoryStateStore(StateInterface):
     
     def get_preference(self, agent_id: str) -> list[Preference]:
         """Get all preferences for an agent.
+        
+        IMPLEMENTED:
+            Linear scan of all preferences, filtering by agent_id.
+            Time complexity: O(n) where n = total preferences.
+        
+        TODO (algorithm extension point):
+            - Add index on agent_id for O(1) lookup
+            - Support importance-based filtering
+            - Support sorting by importance
         
         Args:
             agent_id: Agent identifier
