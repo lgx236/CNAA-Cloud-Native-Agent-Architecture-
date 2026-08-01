@@ -4,6 +4,9 @@ Defines all MCP tools exposed by CNAA Server.
 These tool definitions are a core deliverable of the framework:
 they define WHAT capabilities CNAA provides to agents.
 
+Tool schemas are imported from cnaa.schemas for centralized management.
+Modify cnaa/schemas.py to change interface formats.
+
 Tool categories:
 - Memory tools: store/get/list/tag/delete memories
 - State tools: get/update/delete state entries
@@ -14,6 +17,23 @@ Tool categories:
 from __future__ import annotations
 
 from typing import Any
+
+# Import schemas from centralized schema definitions
+from cnaa.schemas import (
+    DELETE_MEMORY_REQUEST,
+    DELETE_PREFERENCE_REQUEST,
+    DELETE_STATE_REQUEST,
+    GET_ENVIRONMENT_REQUEST,
+    GET_MEMORY_REQUEST,
+    GET_PREFERENCE_REQUEST,
+    GET_STATE_REQUEST,
+    LIST_MEMORIES_REQUEST,
+    STORE_MEMORY_REQUEST,
+    TAG_SHORT_TERM_REQUEST,
+    UPDATE_ENVIRONMENT_REQUEST,
+    UPDATE_PREFERENCE_REQUEST,
+    UPDATE_STATE_REQUEST,
+)
 
 # Tool name constants
 STORE_MEMORY = "cnaa_store_memory"
@@ -54,42 +74,7 @@ def get_tool_definitions() -> list[dict[str, Any]]:
                 "Long-term memories are persisted in cloud for cross-device access. "
                 "Short-term memories are kept in local context."
             ),
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "agent_id": {
-                        "type": "string",
-                        "description": "Agent identifier",
-                    },
-                    "memory_id": {
-                        "type": "string",
-                        "description": "Unique memory identifier",
-                    },
-                    "type": {
-                        "type": "string",
-                        "enum": ["long_term", "short_term"],
-                        "description": "Memory type",
-                    },
-                    "content": {
-                        "type": "object",
-                        "description": "Memory content (open JSON structure)",
-                    },
-                    "tags": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "Memory tags for retrieval",
-                    },
-                    "completion_score": {
-                        "type": "number",
-                        "description": "Task completion score [0.0, 1.0]",
-                    },
-                    "metadata": {
-                        "type": "object",
-                        "description": "Optional metadata",
-                    },
-                },
-                "required": ["agent_id", "memory_id", "type", "content"],
-            },
+            "inputSchema": STORE_MEMORY_REQUEST,
         },
         {
             "name": GET_MEMORY,
@@ -97,20 +82,7 @@ def get_tool_definitions() -> list[dict[str, Any]]:
                 "Retrieve a memory by ID. "
                 "Used to pull full memory details from cloud when needed."
             ),
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "agent_id": {
-                        "type": "string",
-                        "description": "Agent identifier",
-                    },
-                    "memory_id": {
-                        "type": "string",
-                        "description": "Memory identifier to retrieve",
-                    },
-                },
-                "required": ["agent_id", "memory_id"],
-            },
+            "inputSchema": GET_MEMORY_REQUEST,
         },
         {
             "name": LIST_MEMORIES,
@@ -118,26 +90,7 @@ def get_tool_definitions() -> list[dict[str, Any]]:
                 "List memories for an agent. "
                 "Supports filtering by type and tags."
             ),
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "agent_id": {
-                        "type": "string",
-                        "description": "Agent identifier",
-                    },
-                    "type": {
-                        "type": "string",
-                        "enum": ["long_term", "short_term"],
-                        "description": "Filter by memory type (optional)",
-                    },
-                    "tags": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "Filter by tags (optional)",
-                    },
-                },
-                "required": ["agent_id"],
-            },
+            "inputSchema": LIST_MEMORIES_REQUEST,
         },
         {
             "name": TAG_SHORT_TERM,
@@ -146,39 +99,12 @@ def get_tool_definitions() -> list[dict[str, Any]]:
                 "Used to mark recent memories for later retrieval "
                 "or knowledge condensation."
             ),
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "agent_id": {
-                        "type": "string",
-                        "description": "Agent identifier",
-                    },
-                    "tags": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "Tags to apply",
-                    },
-                },
-                "required": ["agent_id", "tags"],
-            },
+            "inputSchema": TAG_SHORT_TERM_REQUEST,
         },
         {
             "name": DELETE_MEMORY,
             "description": "Delete a memory from storage.",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "agent_id": {
-                        "type": "string",
-                        "description": "Agent identifier",
-                    },
-                    "memory_id": {
-                        "type": "string",
-                        "description": "Memory identifier to delete",
-                    },
-                },
-                "required": ["agent_id", "memory_id"],
-            },
+            "inputSchema": DELETE_MEMORY_REQUEST,
         },
         # --- State Tools ---
         {
@@ -187,16 +113,7 @@ def get_tool_definitions() -> list[dict[str, Any]]:
                 "Retrieve all state entries for an agent. "
                 "State represents accumulated knowledge from experiences."
             ),
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "agent_id": {
-                        "type": "string",
-                        "description": "Agent identifier",
-                    },
-                },
-                "required": ["agent_id"],
-            },
+            "inputSchema": GET_STATE_REQUEST,
         },
         {
             "name": UPDATE_STATE,
@@ -204,47 +121,12 @@ def get_tool_definitions() -> list[dict[str, Any]]:
                 "Create or update a state entry. "
                 "Used to persist accumulated knowledge."
             ),
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "agent_id": {
-                        "type": "string",
-                        "description": "Agent identifier",
-                    },
-                    "state_id": {
-                        "type": "string",
-                        "description": "State identifier",
-                    },
-                    "category": {
-                        "type": "string",
-                        "enum": ["preference", "knowledge", "environment"],
-                        "description": "State category",
-                    },
-                    "content": {
-                        "type": "object",
-                        "description": "State content (JSON)",
-                    },
-                },
-                "required": ["agent_id", "state_id", "category", "content"],
-            },
+            "inputSchema": UPDATE_STATE_REQUEST,
         },
         {
             "name": DELETE_STATE,
             "description": "Delete a state entry.",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "agent_id": {
-                        "type": "string",
-                        "description": "Agent identifier",
-                    },
-                    "state_id": {
-                        "type": "string",
-                        "description": "State identifier to delete",
-                    },
-                },
-                "required": ["agent_id", "state_id"],
-            },
+            "inputSchema": DELETE_STATE_REQUEST,
         },
         # --- Preference Tools ---
         {
@@ -254,16 +136,7 @@ def get_tool_definitions() -> list[dict[str, Any]]:
                 "Preferences represent important memory patterns "
                 "that shape agent behavior."
             ),
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "agent_id": {
-                        "type": "string",
-                        "description": "Agent identifier",
-                    },
-                },
-                "required": ["agent_id"],
-            },
+            "inputSchema": GET_PREFERENCE_REQUEST,
         },
         {
             "name": UPDATE_PREFERENCE,
@@ -271,60 +144,12 @@ def get_tool_definitions() -> list[dict[str, Any]]:
                 "Create or update a preference entry. "
                 "Used to persist important memory patterns."
             ),
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "agent_id": {
-                        "type": "string",
-                        "description": "Agent identifier",
-                    },
-                    "preference_id": {
-                        "type": "string",
-                        "description": "Preference identifier",
-                    },
-                    "key": {
-                        "type": "string",
-                        "description": "Preference key/label",
-                    },
-                    "value": {
-                        "type": "object",
-                        "description": "Preference content (JSON)",
-                    },
-                    "importance": {
-                        "type": "number",
-                        "description": "Importance score [0.0, 1.0]",
-                    },
-                    "source_memory_ids": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                        "description": "Source memory identifiers",
-                    },
-                },
-                "required": [
-                    "agent_id",
-                    "preference_id",
-                    "key",
-                    "value",
-                ],
-            },
+            "inputSchema": UPDATE_PREFERENCE_REQUEST,
         },
         {
             "name": DELETE_PREFERENCE,
             "description": "Delete a preference entry.",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "agent_id": {
-                        "type": "string",
-                        "description": "Agent identifier",
-                    },
-                    "preference_id": {
-                        "type": "string",
-                        "description": "Preference identifier to delete",
-                    },
-                },
-                "required": ["agent_id", "preference_id"],
-            },
+            "inputSchema": DELETE_PREFERENCE_REQUEST,
         },
         # --- Environment Tools ---
         {
@@ -333,16 +158,7 @@ def get_tool_definitions() -> list[dict[str, Any]]:
                 "Retrieve the environment context for an agent. "
                 "Environment provides context-aware information."
             ),
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "agent_id": {
-                        "type": "string",
-                        "description": "Agent identifier",
-                    },
-                },
-                "required": ["agent_id"],
-            },
+            "inputSchema": GET_ENVIRONMENT_REQUEST,
         },
         {
             "name": UPDATE_ENVIRONMENT,
@@ -350,24 +166,7 @@ def get_tool_definitions() -> list[dict[str, Any]]:
                 "Create or update the environment context. "
                 "Used to persist current environment state."
             ),
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "agent_id": {
-                        "type": "string",
-                        "description": "Agent identifier",
-                    },
-                    "env_id": {
-                        "type": "string",
-                        "description": "Environment identifier",
-                    },
-                    "context": {
-                        "type": "object",
-                        "description": "Environment context (JSON)",
-                    },
-                },
-                "required": ["agent_id", "env_id", "context"],
-            },
+            "inputSchema": UPDATE_ENVIRONMENT_REQUEST,
         },
     ]
 
@@ -393,3 +192,18 @@ def get_tool_names() -> list[str]:
         GET_ENVIRONMENT,
         UPDATE_ENVIRONMENT,
     ]
+
+
+def get_tool_by_name(name: str) -> dict[str, Any] | None:
+    """Get a tool definition by name.
+
+    Args:
+        name: The tool name.
+
+    Returns:
+        Tool definition dict if found, None otherwise.
+    """
+    for tool in get_tool_definitions():
+        if tool["name"] == name:
+            return tool
+    return None
