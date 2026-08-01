@@ -3,6 +3,11 @@
 Reference implementation of memory storage using in-memory dictionaries.
 This is a simple implementation for testing and development.
 Can be replaced with persistent storage backends.
+
+Algorithm responsibilities:
+- IMPLEMENTED: Dict-based CRUD, tag filtering, type filtering
+- TODO (production): Replace with persistent storage (SQLite, PostgreSQL)
+- TODO (algorithm): Implement indexing for efficient tag/type queries
 """
 
 from typing import Any
@@ -58,6 +63,18 @@ class InMemoryMemoryStore(MemoryInterface):
         tags: list[str] | None = None,
     ) -> list[MemorySummary]:
         """List memories for an agent with optional filtering.
+        
+        IMPLEMENTED:
+            Linear scan of all memories for the agent.
+            Applies type filter (exact match) and tag filter (any match).
+            Returns MemorySummary (no full content).
+            Time complexity: O(n) where n = memories for this agent.
+        
+        TODO (algorithm extension point):
+            - Add index on (agent_id, type) for O(1) type filtering
+            - Add inverted index on tags for efficient tag queries
+            - Support pagination (limit, offset)
+            - Support sorting (by timestamp, completion_score)
         
         Args:
             agent_id: Agent identifier

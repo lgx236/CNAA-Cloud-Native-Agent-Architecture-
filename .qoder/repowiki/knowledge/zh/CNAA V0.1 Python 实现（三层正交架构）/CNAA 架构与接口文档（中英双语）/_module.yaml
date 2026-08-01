@@ -1,0 +1,9 @@
+schema_version: 1
+module_path: docs
+title: CNAA 架构与接口文档（中英双语）
+scope:
+    - docs/en/
+    - docs/zh/
+source_files: []
+depends_on: []
+related_to: []

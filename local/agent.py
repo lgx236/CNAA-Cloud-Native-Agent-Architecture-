@@ -234,13 +234,17 @@ class LocalAgentInterface:
     def get_states(self, use_cache: bool = True) -> list[dict[str, Any]]:
         """Get states, using cache if available.
         
+        IMPLEMENTED:
+            Checks states-specific cache expiration.
+            Fetches from cloud if cache expired or disabled.
+        
         Args:
             use_cache: Whether to use local cache
             
         Returns:
             List of state dicts
         """
-        if use_cache and not self.state_cache.is_expired():
+        if use_cache and not self.state_cache.is_states_expired():
             states = self.state_cache.get_states()
         else:
             # Fetch from cloud
@@ -289,13 +293,17 @@ class LocalAgentInterface:
     def get_preferences(self, use_cache: bool = True) -> list[dict[str, Any]]:
         """Get preferences, using cache if available.
         
+        IMPLEMENTED:
+            Checks preferences-specific cache expiration.
+            Fetches from cloud if cache expired or disabled.
+        
         Args:
             use_cache: Whether to use local cache
             
         Returns:
             List of preference dicts
         """
-        if use_cache and not self.state_cache.is_expired():
+        if use_cache and not self.state_cache.is_preferences_expired():
             prefs = self.state_cache.get_preferences()
         else:
             # Fetch from cloud
@@ -353,13 +361,17 @@ class LocalAgentInterface:
     def get_environment(self, use_cache: bool = True) -> dict[str, Any] | None:
         """Get environment, using cache if available.
         
+        IMPLEMENTED:
+            Checks environment-specific cache expiration.
+            Fetches from cloud if cache expired or disabled.
+        
         Args:
             use_cache: Whether to use local cache
             
         Returns:
             Environment dict or None
         """
-        if use_cache and not self.state_cache.is_expired():
+        if use_cache and not self.state_cache.is_environment_expired():
             env = self.state_cache.get_environment()
             if env:
                 return {

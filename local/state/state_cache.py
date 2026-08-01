@@ -2,6 +2,11 @@
 
 Caches state, preference, and environment data from cloud for local access.
 Reduces network calls and provides faster access to frequently used data.
+
+Algorithm responsibilities:
+- IMPLEMENTED: TTL-based cache invalidation, dict-based storage
+- TODO (production): LRU cache, size limits, persistent cache
+- TODO (algorithm): Smart prefetching, relevance-based caching
 """
 
 from __future__ import annotations
@@ -42,6 +47,16 @@ class StateCache:
     ) -> None:
         """Initialize the state cache.
         
+        IMPLEMENTED:
+            Creates cache with separate loaded flags for each data type.
+            Each type (states, preferences, environment) tracks its own
+            freshness independently.
+        
+        TODO (algorithm extension point):
+            - Support per-item TTL (states may expire differently than preferences)
+            - Support stale-while-revalidate pattern
+            - Support usage-based invalidation (keep hot items longer)
+        
         Args:
             agent_id: Agent identifier
             ttl_minutes: Time-to-live for cache in minutes
@@ -53,33 +68,52 @@ class StateCache:
         self._preferences: list[Preference] = []
         self._environment: Environment | None = None
         
+        # Track each data type's freshness separately
+        self._states_loaded: bool = False
+        self._preferences_loaded: bool = False
+        self._environment_loaded: bool = False
         self._last_updated: datetime | None = None
     
     def update_states(self, states: list[State]) -> None:
         """Update cached states.
         
+        IMPLEMENTED:
+            Stores states and marks states as loaded.
+            Updates global timestamp for backward compatibility.
+        
         Args:
             states: List of State objects from cloud
         """
         self._states = states
+        self._states_loaded = True
         self._last_updated = datetime.now()
     
     def update_preferences(self, preferences: list[Preference]) -> None:
         """Update cached preferences.
         
+        IMPLEMENTED:
+            Stores preferences and marks preferences as loaded.
+            Updates global timestamp for backward compatibility.
+        
         Args:
             preferences: List of Preference objects from cloud
         """
         self._preferences = preferences
+        self._preferences_loaded = True
         self._last_updated = datetime.now()
     
     def update_environment(self, environment: Environment | None) -> None:
         """Update cached environment.
         
+        IMPLEMENTED:
+            Stores environment and marks environment as loaded.
+            Updates global timestamp for backward compatibility.
+        
         Args:
             environment: Environment object from cloud
         """
         self._environment = environment
+        self._environment_loaded = True
         self._last_updated = datetime.now()
     
     def get_states(self) -> list[State]:
@@ -109,6 +143,16 @@ class StateCache:
     def is_expired(self) -> bool:
         """Check if cache has expired.
         
+        IMPLEMENTED:
+            Simple TTL check: if (now - last_updated) > ttl, expired.
+            Returns True if never updated.
+            Time complexity: O(1).
+        
+        TODO (algorithm extension point):
+            - Support per-item TTL (states may expire differently than preferences)
+            - Support stale-while-revalidate pattern
+            - Support usage-based invalidation (keep hot items longer)
+        
         Returns:
             True if cache is expired or never updated
         """
@@ -117,11 +161,57 @@ class StateCache:
         
         return datetime.now() - self._last_updated > self.ttl
     
+    def is_states_expired(self) -> bool:
+        """Check if states cache has expired.
+        
+        IMPLEMENTED:
+            Returns True if states have never been loaded or TTL expired.
+        
+        Returns:
+            True if states cache is expired
+        """
+        if not self._states_loaded:
+            return True
+        return self.is_expired()
+    
+    def is_preferences_expired(self) -> bool:
+        """Check if preferences cache has expired.
+        
+        IMPLEMENTED:
+            Returns True if preferences have never been loaded or TTL expired.
+        
+        Returns:
+            True if preferences cache is expired
+        """
+        if not self._preferences_loaded:
+            return True
+        return self.is_expired()
+    
+    def is_environment_expired(self) -> bool:
+        """Check if environment cache has expired.
+        
+        IMPLEMENTED:
+            Returns True if environment has never been loaded or TTL expired.
+        
+        Returns:
+            True if environment cache is expired
+        """
+        if not self._environment_loaded:
+            return True
+        return self.is_expired()
+    
     def clear(self) -> None:
-        """Clear all cached data."""
+        """Clear all cached data.
+        
+        IMPLEMENTED:
+            Resets all data and loaded flags.
+        """
         self._states = []
         self._preferences = []
         self._environment = None
+        self._states_loaded = False
+        self._preferences_loaded = False
+        self._environment_loaded = False
         self._last_updated = None
     
     def get_state_by_id(self, state_id: str) -> State | None:

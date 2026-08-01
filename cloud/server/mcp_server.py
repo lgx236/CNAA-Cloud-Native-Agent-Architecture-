@@ -5,6 +5,11 @@ This server:
 - Registers all MCP tools defined in cnaa.tools
 - Routes tool calls to storage backends
 - Follows dumb service principle (JSON in, JSON out)
+
+Algorithm responsibilities:
+- IMPLEMENTED: Tool routing, request/response marshalling
+- TODO (production): Authentication, rate limiting, request validation
+- TODO (algorithm): Request batching, caching layer, query optimization
 """
 
 from __future__ import annotations
@@ -95,8 +100,17 @@ class CNAA_MCPServer:
     def handle_tool_call(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         """Handle an MCP tool call.
         
-        This is the main entry point for processing tool calls.
-        It routes the call to the appropriate handler based on tool_name.
+        IMPLEMENTED:
+            Routes tool_name to registered handler via dict lookup.
+            Wraps handler call with try/except for error handling.
+            Returns JSON response dict.
+            Time complexity: O(1) for routing, handler-dependent for execution.
+        
+        TODO (production):
+            - Add request schema validation (validate arguments against tool inputSchema)
+            - Add authentication/authorization checks
+            - Add rate limiting per agent_id
+            - Add request/response logging for debugging
         
         Args:
             tool_name: Name of the MCP tool to call

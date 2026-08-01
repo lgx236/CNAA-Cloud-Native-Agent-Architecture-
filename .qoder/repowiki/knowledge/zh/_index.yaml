@@ -3,15 +3,70 @@ schema_version: 1
 locale: zh-CN
 branch: main
 nodes_managed: true
-exported_at: "2026-08-01T14:48:55Z"
+exported_at: "2026-08-01T16:30:15Z"
 modules:
     "":
-        dir_name: CNAA 项目根目录与文档入口
-        title: CNAA 项目根目录与文档入口
+        dir_name: CNAA V0.1 Python 实现（三层正交架构）
+        title: CNAA V0.1 Python 实现（三层正交架构）
         scope:
             - README.md
             - README_CN.md
         source_files: []
+        children:
+            - cloud
+            - cnaa
+            - docs
+            - local
+        depends_on: []
+        related_to: []
+    cloud:
+        dir_name: CNAA 云端服务（MCP Server + 存储后端）
+        title: CNAA 云端服务（MCP Server + 存储后端）
+        scope:
+            - cloud/
+        source_files: []
+        children:
+            - cloud/storage_backends
+        depends_on: []
+        related_to:
+            - path: cnaa
+    cloud/storage_backends:
+        dir_name: 云存储后端（内存实现）
+        title: 云存储后端（内存实现）
+        scope:
+            - cloud/storage/
+        source_files: []
         children: []
         depends_on: []
         related_to: []
+    cnaa:
+        dir_name: CNAA 核心规范与接口契约层
+        title: CNAA 核心规范与接口契约层
+        scope:
+            - cnaa/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: cloud
+            - path: local
+    docs:
+        dir_name: CNAA 架构与接口文档（中英双语）
+        title: CNAA 架构与接口文档（中英双语）
+        scope:
+            - docs/en/
+            - docs/zh/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []
+    local:
+        dir_name: CNAA 本地客户端（记忆分层与状态缓存）
+        title: CNAA 本地客户端（记忆分层与状态缓存）
+        scope:
+            - local/
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: cnaa

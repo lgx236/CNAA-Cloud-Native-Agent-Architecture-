@@ -1,0 +1,9 @@
+schema_version: 1
+module_path: cloud
+title: CNAA 云端服务（MCP Server + 存储后端）
+scope:
+    - cloud/
+source_files: []
+depends_on: []
+related_to:
+    - path: cnaa

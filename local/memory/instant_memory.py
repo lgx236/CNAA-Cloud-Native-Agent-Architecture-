@@ -3,6 +3,11 @@
 Manages instant memories (short-term memories) on the local side.
 Instant memories are lightweight summaries kept in agent's local context,
 with references to full data stored in CNAA cloud.
+
+Algorithm responsibilities:
+- IMPLEMENTED: CRUD operations, status transitions, time-based filtering
+- TODO (plugin): Custom condensation strategies (importance-based, usage-based)
+- TODO (plugin): Custom eviction strategies (LRU, LFU, priority-based)
 """
 
 from __future__ import annotations
@@ -64,6 +69,14 @@ class InstantMemoryManager:
         cnaa_ref: str = "",
     ) -> InstantMemory:
         """Create a new instant memory from a task checkpoint.
+        
+        IMPLEMENTED:
+            Creates InstantMemory with ACTIVE status, stores in local dict.
+            Auto-generates cnaa_ref if not provided.
+        
+        TODO (when integrating agent framework):
+            - Validate memory_id uniqueness against cloud
+            - Link to TaskCheckpoint for automatic compression
         
         Args:
             task_id: Task identifier
@@ -142,6 +155,17 @@ class InstantMemoryManager:
     def condense_old_memories(self, threshold_hours: float = 1.0) -> int:
         """Condense memories older than threshold.
         
+        IMPLEMENTED:
+            Linear scan of all ACTIVE memories.
+            If (now - timestamp) >= threshold_hours, transition to CONDENSED.
+            Time complexity: O(n) where n = total memories.
+        
+        TODO (algorithm extension point):
+            - Replace time-based threshold with custom scoring function
+            - Support importance-weighted condensation (high importance = keep longer)
+            - Support usage-frequency-based condensation (frequently accessed = keep)
+            - Integrate with MemoryLifecyclePlugin for custom strategies
+        
         Args:
             threshold_hours: Age threshold in hours
             
@@ -184,6 +208,17 @@ class InstantMemoryManager:
     
     def evict_old_memories(self, threshold_days: float = 7.0) -> int:
         """Evict condensed memories older than threshold.
+        
+        IMPLEMENTED:
+            Linear scan of all CONDENSED memories.
+            If (now - timestamp) >= threshold_days, transition to EVICTED.
+            Time complexity: O(n) where n = total memories.
+        
+        TODO (algorithm extension point):
+            - Replace time-based threshold with custom eviction policy
+            - Support LRU/LFU eviction strategies
+            - Support priority-based eviction (low importance first)
+            - Integrate with MemoryLifecyclePlugin for custom strategies
         
         Args:
             threshold_days: Age threshold in days

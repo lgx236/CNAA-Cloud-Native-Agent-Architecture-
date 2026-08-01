@@ -1,0 +1,8 @@
+schema_version: 1
+module_path: cloud/storage_backends
+title: 云存储后端（内存实现）
+scope:
+    - cloud/storage/
+source_files: []
+depends_on: []
+related_to: []

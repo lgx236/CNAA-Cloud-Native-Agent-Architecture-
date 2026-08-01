@@ -1,6 +1,6 @@
 schema_version: 1
 module_path: ""
-title: CNAA 项目根目录与文档入口
+title: CNAA V0.1 Python 实现（三层正交架构）
 scope:
     - README.md
     - README_CN.md
