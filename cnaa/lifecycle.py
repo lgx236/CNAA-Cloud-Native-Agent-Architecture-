@@ -158,6 +158,17 @@ class TimeBasedLifecyclePlugin(MemoryLifecyclePlugin):
     """Default time-based lifecycle implementation.
 
     Uses time thresholds for condensation and eviction.
+    
+    IMPLEMENTED:
+        Time-based condensation: if age >= condensation_threshold, condense.
+        Time-based eviction: if age >= eviction_threshold, evict.
+        Score-based promotion: if completion_score >= threshold, promote.
+        Time complexity: O(1) per check.
+    
+    TODO (algorithm extension point):
+        - Support composite scoring (time + importance + access frequency)
+        - Support adaptive thresholds (adjust based on memory volume)
+        - Support custom condensation scoring functions
     """
 
     def __init__(self, config: LifecycleConfig | None = None) -> None:
@@ -383,7 +394,19 @@ class StateEvolutionPlugin(ABC):
 # ---------------------------------------------------------------------------
 
 class DefaultStateEvolutionPlugin(StateEvolutionPlugin):
-    """Default state evolution implementation."""
+    """Default state evolution implementation.
+    
+    IMPLEMENTED:
+        Provides two default rules: accumulated->associated, associated->decayed.
+        should_evolve() returns False (no auto-evolution by default).
+        evolve() returns status dict without side effects.
+    
+    TODO (algorithm extension point):
+        - Implement automatic evolution based on access patterns
+        - Support frequency-based evolution (frequently accessed = stay accumulated)
+        - Support graph-based evolution (related states evolve together)
+        - Add decay priority (unused states decay faster)
+    """
 
     def __init__(self) -> None:
         self.rules = [

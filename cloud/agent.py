@@ -26,6 +26,16 @@ class CloudAgentInterface:
     - State management: knowledge accumulation and preference learning
     - Environment context: current working context
     
+    IMPLEMENTED:
+        All methods delegate to CNAA_MCPServer.handle_tool_call().
+        Each method marshals arguments and returns JSON response dict.
+        Time complexity: O(1) per call (routing only).
+    
+    TODO (algorithm extension point):
+        - Add batch operations (store multiple memories at once)
+        - Add caching layer for frequently accessed memories
+        - Add bulk search/filter capabilities
+    
     For MCP protocol usage, agentic frameworks should call the MCP tools directly.
     This interface is for convenience when using Python.
     
