@@ -2,54 +2,80 @@
 
 This directory contains integration examples showing how agentic frameworks can use CNAA.
 
-## OpenClaw Integration
+## OpenClaw Integration (MCP Stdio)
 
-[`openclaw_integration.py`](openclaw_integration.py) demonstrates how [OpenClaw](https://github.com/openclaw/openclaw) (a TypeScript-based personal AI assistant) can integrate with CNAA to provide long-term memory capabilities.
+The recommended integration method uses the **MCP stdio server** (`mcp_stdio_server.py`), which wraps CNAA as a standard MCP server that OpenClaw can directly connect to.
 
 ### Architecture
 
 ```
-OpenClaw (TypeScript)  ←→  CNAA Cloud (Python)  ←→  Storage
-     HTTP/MCP                  HTTP API
+OpenClaw Agent  ←stdio JSON-RPC→  mcp_stdio_server.py  ←→  CNAA Core  ←→  Storage
+     MCP Protocol                     (MCP Wrapper)         (Tool Routing)
 ```
 
-### Key Concepts
+### Configuration
 
-1. **Long-term Memory**: OpenClaw agents store task experiences in CNAA cloud
-2. **State Management**: Agents accumulate knowledge and preferences over time
-3. **Cross-session Persistence**: Memories persist across agent restarts
-4. **Multi-device Sync**: All OpenClaw instances share the same memory via CNAA cloud
+Add to `~/.openclaw/openclaw.json`:
 
-### Running the Example
+```json5
+{
+  mcp: {
+    servers: {
+      cnaa: {
+        command: "python3",
+        args: ["/path/to/CNAA/mcp_stdio_server.py"],
+      },
+    },
+  },
+}
+```
+
+### Available Tools (13 total)
+
+| Category | Tools |
+|----------|-------|
+| Memory | `cnaa_store_memory`, `cnaa_get_memory`, `cnaa_list_memories`, `cnaa_tag_short_term`, `cnaa_delete_memory` |
+| State | `cnaa_get_state`, `cnaa_update_state`, `cnaa_delete_state` |
+| Preference | `cnaa_get_preference`, `cnaa_update_preference`, `cnaa_delete_preference` |
+| Environment | `cnaa_get_environment`, `cnaa_update_environment` |
+
+### Verification
+
+```bash
+# Verify OpenClaw can see CNAA tools
+openclaw mcp probe
+# Expected: cnaa: 13 tools
+```
+
+## HTTP Integration (Alternative)
+
+[`openclaw_integration.py`](openclaw_integration.py) demonstrates HTTP-based integration for frameworks that prefer REST APIs.
+
+### Running the HTTP Example
 
 1. Start the CNAA server:
    ```bash
-   python server.py --host localhost --port 8080
+   python3 server.py --host localhost --port 8080
    ```
 
 2. Run the integration example:
    ```bash
    cd examples
-   python openclaw_integration.py
+   python3 openclaw_integration.py
    ```
 
-### Integration Pattern
+## Design Principles
 
-The integration follows CNAA's design principles:
-- **Dumb Service**: CNAA handles storage, OpenClaw handles reasoning
-- **JSON in/out**: All communication via JSON over HTTP
-- **Agent-agnostic**: Works with any agentic framework, not just OpenClaw
+- **Dumb Service**: CNAA handles storage, agents handle reasoning
+- **JSON in/out**: All communication via JSON (stdio or HTTP)
+- **Agent-agnostic**: Works with any agentic framework
+- **Algorithm extensible**: Each function documents IMPLEMENTED/TODO
 
-### What's Implemented
-
-- HTTP client for CNAA cloud server
-- All CNAA operations (store/get/list/delete memories, states, preferences, environments)
-- Complete usage examples
-
-### What's Next (Algorithm Extension Points)
+## What's Next (Algorithm Extension Points)
 
 - Connection pooling and retry logic
 - Authentication and authorization
 - Automatic memory condensation based on agent lifecycle
 - Semantic search over memories (via RetrievalPlugin)
-- Background sync between OpenClaw and CNAA
+- Request batching for multiple tool calls
+- Result caching for read-only operations
