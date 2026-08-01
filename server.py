@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
 """CNAA Server Entry Point.
 
-This is the main entry point for running the CNAA server.
-It initializes the cloud server and provides a simple HTTP interface.
+This is the main entry point for running the CNAA cloud server.
+It provides agentic frameworks (e.g., openclow) with long-term memory
+storage and state management capabilities.
+
+The server exposes:
+- GET /schemas: Interface schema definitions
+- POST /mcp: MCP tool calls for memory/state operations
+- GET /health: Health check endpoint
 
 Usage:
     python server.py [--host HOST] [--port PORT]

@@ -1,8 +1,10 @@
 """Cloud Agent Interface.
 
-Provides a Python interface for agents to interact with CNAA cloud server.
-This is a convenience wrapper around the MCP server for direct Python usage.
-For MCP protocol usage, agents should use the MCP tools directly.
+Provides a Python interface for agentic frameworks to interact with
+CNAA cloud server. This is a convenience wrapper around the MCP server
+for direct Python usage.
+
+For MCP protocol usage, agentic frameworks should use the MCP tools directly.
 """
 
 from __future__ import annotations
@@ -13,30 +15,40 @@ from cloud.server.mcp_server import CNAA_MCPServer
 
 
 class CloudAgentInterface:
-    """Agent-facing interface for CNAA cloud server.
+    """Agentic framework interface for CNAA cloud server.
     
-    This class provides a Python API for agents to interact with CNAA.
-    It wraps the MCP server and provides method-based access.
+    This class provides a Python API for agentic frameworks (e.g., openclow)
+    to interact with CNAA cloud. It wraps the MCP server and provides
+    method-based access for convenient integration.
     
-    For MCP protocol usage, agents should call the MCP tools directly.
+    CNAA cloud provides agentic systems with:
+    - Long-term memory storage: persistent experience across sessions
+    - State management: knowledge accumulation and preference learning
+    - Environment context: current working context
+    
+    For MCP protocol usage, agentic frameworks should call the MCP tools directly.
     This interface is for convenience when using Python.
     
-    Example:
+    Example (openclow integration):
         ```python
         from cloud import CloudAgentInterface
         
-        agent = CloudAgentInterface()
+        # openclow creates one interface per agent instance
+        cloud = CloudAgentInterface()
         
-        # Store a memory
-        agent.store_memory(
-            agent_id="agent-001",
+        # Store long-term memory
+        cloud.store_memory(
+            agent_id="openclow-agent-001",
             memory_id="mem-001",
             memory_type="long_term",
-            content={"task": "example"},
+            content={"task": "example", "result": "success"},
         )
         
-        # Get a memory
-        memory = agent.get_memory("agent-001", "mem-001")
+        # Retrieve long-term memory
+        memory = cloud.get_memory("openclow-agent-001", "mem-001")
+        
+        # Get accumulated state (knowledge, preferences)
+        states = cloud.get_state("openclow-agent-001")
         ```
     """
     

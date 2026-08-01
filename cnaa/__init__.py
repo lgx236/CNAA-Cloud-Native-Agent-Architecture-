@@ -1,6 +1,10 @@
 """CNAA - Cloud Native Agentic Architecture.
 
 Experience Runtime Framework for AI Agents.
+Provides agentic frameworks (e.g., openclow) with long-term memory
+capabilities: persistent experience, knowledge accumulation, and
+preference learning across sessions.
+
 Core specification: data models, interaction interfaces,
 MCP tool definitions, and lifecycle rules.
 
@@ -13,6 +17,10 @@ Key Components:
 - interaction.py: Abstract interfaces for local-cloud interaction
 - tools.py: MCP tool definitions
 - lifecycle.py: Pluggable lifecycle interfaces for external packages
+
+Integration:
+Agentic frameworks integrate via LocalAgentInterface (local/agent.py)
+to gain long-term memory capabilities for their agents.
 """
 
 __version__ = "0.1.0"

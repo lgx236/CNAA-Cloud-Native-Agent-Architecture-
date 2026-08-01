@@ -1,15 +1,16 @@
 """CNAA Cloud Server Reference Implementation.
 
 This is a reference implementation of the CNAA cloud server.
-It provides:
-- In-memory storage (can be replaced with persistent storage)
+It provides agentic frameworks (e.g., openclow) with:
+- Long-term memory storage: persistent experience across sessions
+- State management: knowledge accumulation and preference learning
 - MCP server for agent communication
-- Agent interface for integration
+- Python interface for direct integration
 
 Structure:
 - storage/: Storage layer implementations
 - server/: MCP server implementation
-- agent.py: Agent-facing interface
+- agent.py: Agentic framework interface
 """
 
 from cloud.server.mcp_server import CNAA_MCPServer

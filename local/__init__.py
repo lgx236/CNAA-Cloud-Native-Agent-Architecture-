@@ -1,17 +1,17 @@
 """CNAA Local Client Reference Implementation.
 
 This is a reference implementation of the CNAA local client.
-It provides:
-- Instant memory management (short-term memory)
-- State caching for local access
-- MCP client for cloud communication
-- Agent interface for integration
+It provides agentic frameworks (e.g., openclow) with:
+- Long-term memory: persistent experience stored in cloud
+- Instant memory: lightweight task summaries in local context
+- State cache: fast access to knowledge and preferences
+- MCP client: communication with cloud server
 
 Structure:
-- memory/: Instant memory management
+- memory/: Instant memory management (short-term)
 - state/: Local state cache
 - client/: MCP client implementation
-- agent.py: Agent-facing interface
+- agent.py: Agentic framework interface (main entry point)
 """
 
 from local.agent import LocalAgentInterface

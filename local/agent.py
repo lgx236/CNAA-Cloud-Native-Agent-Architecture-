@@ -1,7 +1,10 @@
 """Local Agent Interface.
 
-Provides a unified interface for agents to interact with CNAA.
-This is the main entry point for agent integration.
+Provides a unified interface for agentic frameworks (e.g., openclow) to
+integrate long-term memory capabilities via CNAA.
+
+This is the main entry point for any agentic system that wants to give
+its agents persistent experience memory across sessions.
 """
 
 from __future__ import annotations
@@ -16,44 +19,47 @@ from local.state.state_cache import StateCache
 
 
 class LocalAgentInterface:
-    """Agent-facing interface for CNAA local client.
+    """Agentic framework interface for CNAA local client.
     
-    This is the main entry point for agents to interact with CNAA.
-    It combines:
-    - Instant memory management (local)
-    - State cache (local)
-    - MCP client (cloud communication)
+    This is the main entry point for agentic frameworks (e.g., openclow)
+    to integrate long-term memory capabilities. It combines:
+    - Instant memory management (local): lightweight task summaries
+    - State cache (local): fast access to frequently used state
+    - MCP client (cloud): persistent long-term memory storage
     
-    The interface is designed for agent frameworks like openclow to integrate
-    basic memory capabilities through CNAA.
+    CNAA provides agentic systems with:
+    - Long-term memory: persistent experience stored in cloud
+    - Short-term memory: instant memories in local context
+    - State: knowledge accumulation and preference learning
     
-    Example:
+    Example (openclow integration):
         ```python
         from local import LocalAgentInterface
         
-        # Create agent interface
-        agent = LocalAgentInterface(
-            agent_id="agent-001",
-            server_url="http://localhost:8080",
+        # openclow creates one interface per agent instance
+        memory = LocalAgentInterface(
+            agent_id="openclow-agent-001",
+            server_url="http://cloud-server:8080",
         )
         
-        # Store a memory (goes to cloud)
-        agent.store_memory(
+        # After completing a task checkpoint, store to long-term memory
+        memory.store_memory(
             memory_id="mem-001",
             memory_type="long_term",
-            content={"task": "example"},
+            content={"task": "database migration", "result": "success"},
         )
         
-        # Create instant memory (local)
-        agent.create_instant_memory(
+        # Create instant memory for local context
+        memory.create_instant_memory(
             task_id="task-001",
             checkpoint_id="cp-001",
-            summary="Completed task",
+            summary="Completed database migration",
             memory_id="mem-001",
         )
         
-        # Get cached states
-        states = agent.get_states()
+        # Retrieve long-term state (preferences, knowledge)
+        states = memory.get_states()
+        preferences = memory.get_preferences()
         ```
     """
     
