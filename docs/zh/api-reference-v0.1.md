@@ -660,6 +660,70 @@ Agent 在本地运行，CNAA Server 在云端运行。即时记忆保留在 Agen
 
 ---
 
-## 8. 版本历史
+## 8. 安全与认证
+
+### 概述
+
+CNAA v0.1 支持可选的 API 密钥认证和读写权限控制。认证机制默认关闭，可通过环境变量启用，确保向后兼容。
+
+### 启用认证
+
+通过环境变量配置：
+
+```bash
+CNAA_AUTH_ENABLED=true
+CNAA_API_KEYS={"sk-cnaa-001": {"agent_id": "agent-001", "permission": "read_write"}}
+CNAA_ALLOW_UNAUTHENTICATED=false
+```
+
+### 请求认证
+
+在 HTTP 请求中添加 `Authorization` 头：
+
+```bash
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer sk-cnaa-001" \
+  -d '{"tool": "cnaa_store_memory", "arguments": {...}}'
+```
+
+### 权限级别
+
+| 权限级别 | 值 | 读操作 | 写操作 | 说明 |
+|---------|---|-------|-------|------|
+| READ_ONLY | `read_only` | ✓ | ✗ | 仅读取记忆和状态 |
+| READ_WRITE | `read_write` | ✓ | ✓ | 读写权限（默认） |
+| ADMIN | `admin` | ✓ | ✓ | 管理员，可跨租户操作 |
+
+### 工具权限分类
+
+**读操作**（需要 `read_only` 及以上权限）：
+- `cnaa_get_memory`、`cnaa_list_memories`、`cnaa_search_memories`、`cnaa_recall_memories`
+- `cnaa_get_state`、`cnaa_get_preference`、`cnaa_get_environment`
+
+**写操作**（需要 `read_write` 及以上权限）：
+- `cnaa_store_memory`、`cnaa_delete_memory`
+- `cnaa_update_state`、`cnaa_delete_state`
+- `cnaa_update_preference`、`cnaa_update_environment`
+
+### Agent ID 隔离
+
+启用认证后：
+- API 密钥绑定特定的 `agent_id`
+- 请求中的 `agent_id` 必须与密钥关联的 `agent_id` 匹配
+- 读操作不匹配时返回 `null`（隐形拒绝）
+- 写操作不匹配时返回错误响应
+
+### 错误响应
+
+| HTTP 状态码 | 场景 | 响应示例 |
+|-----------|------|--------|
+| 401 | 无效或缺失的 API 密钥 | `{"status": "error", "message": "Invalid or missing API key"}` |
+| 200 | 权限不足 | `{"status": "error", "message": "Permission denied: read_only cannot perform write"}` |
+| 200 | Agent ID 不匹配 | `{"status": "error", "message": "Agent ID mismatch..."}` |
+
+---
+
+## 9. 版本历史
 
 - **v0.1.0**（2024-01）：初始版本，定义核心数据模型、交互接口、MCP 工具、生命周期规则

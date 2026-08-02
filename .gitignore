@@ -37,5 +37,8 @@ env/
 .coverage
 htmlcov/
 
+# Environment variables
+.env
+
 # Qoder
 .qoder/__pycache__/

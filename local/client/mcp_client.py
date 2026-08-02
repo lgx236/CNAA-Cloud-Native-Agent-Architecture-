@@ -68,15 +68,18 @@ class CNAA_MCPClient:
         self,
         server_url: str | None = None,
         timeout: float = 30.0,
+        api_key: str | None = None,
     ) -> None:
         """Initialize the MCP client.
         
         Args:
             server_url: URL of the CNAA MCP server (for HTTP transport)
             timeout: Request timeout in seconds
+            api_key: Optional API key for authentication
         """
         self.server_url = server_url
         self.timeout = timeout
+        self.api_key = api_key
         
         # In production, initialize MCP SDK client here
         # For reference implementation, we'll use a mock handler
@@ -117,6 +120,11 @@ class CNAA_MCPClient:
         if self._mock_handler:
             return self._mock_handler.handle_tool_call(tool_name, arguments)
         
+        # Build headers for HTTP transport
+        headers: dict[str, str] = {"Content-Type": "application/json"}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+
         # Placeholder for actual MCP call
         logger.warning(
             f"No mock handler set. In production, this would call {tool_name} "

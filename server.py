@@ -49,6 +49,12 @@ from typing import Any
 
 from cloud.server.mcp_server import CNAA_MCPServer
 from cnaa.schemas import get_all_schemas
+from cnaa.security import (
+    AuthConfig,
+    AuthContext,
+    load_auth_config_from_env,
+    validate_api_key,
+)
 
 # Configure logging
 logging.basicConfig(
@@ -82,6 +88,7 @@ class CNAARequestHandler(BaseHTTPRequestHandler):
     
     # Class-level server reference
     cnaa_server: CNAA_MCPServer = None
+    auth_config: AuthConfig = AuthConfig()  # Default: disabled
     
     def do_GET(self) -> None:
         """Handle GET requests."""
@@ -136,6 +143,31 @@ class CNAARequestHandler(BaseHTTPRequestHandler):
                 self._send_error(HTTPStatus.BAD_REQUEST, "Missing 'tool' field")
                 return
             
+            # Extract Bearer token from Authorization header
+            auth_context = None
+            auth_header = self.headers.get("Authorization", "")
+
+            # When auth is enabled and unauthenticated access is not allowed,
+            # reject requests without a Bearer token explicitly
+            if (
+                self.auth_config.enabled
+                and not self.auth_config.allow_unauthenticated
+                and not auth_header.startswith("Bearer ")
+            ):
+                self._send_error(HTTPStatus.UNAUTHORIZED, "Missing API key")
+                return
+
+            if auth_header.startswith("Bearer "):
+                api_key = auth_header[7:]
+                auth_context = validate_api_key(api_key, self.auth_config)
+                if self.auth_config.enabled and auth_context is None:
+                    self._send_error(HTTPStatus.UNAUTHORIZED, "Invalid or missing API key")
+                    return
+
+            # Inject auth context into arguments for downstream processing
+            if auth_context is not None:
+                arguments["_auth_context"] = auth_context.to_dict()
+
             # Handle tool call
             result = self.cnaa_server.handle_tool_call(tool_name, arguments)
             self._send_json(HTTPStatus.OK, result)
@@ -187,8 +219,17 @@ def create_server(
     Returns:
         Configured HTTPServer instance
     """
+    # Load auth config from environment
+    auth_config = load_auth_config_from_env()
+    CNAARequestHandler.auth_config = auth_config
+
+    if auth_config.enabled:
+        logger.info("Authentication enabled with %d API keys", len(auth_config.api_keys))
+    else:
+        logger.info("Authentication disabled (set CNAA_AUTH_ENABLED=true to enable)")
+
     # Create CNAA server
-    CNAARequestHandler.cnaa_server = CNAA_MCPServer()
+    CNAARequestHandler.cnaa_server = CNAA_MCPServer(auth_config=auth_config)
     
     # Create HTTP server
     server = HTTPServer((host, port), CNAARequestHandler)

@@ -39,15 +39,23 @@ class InMemoryMemoryStore(MemoryInterface):
         """Initialize empty memory store."""
         self._memories: dict[tuple[str, str], Memory] = {}
     
-    def store_memory(self, memory: Memory) -> dict[str, Any]:
+    def store_memory(
+        self, memory: Memory, auth_context: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Store a memory in the in-memory store.
         
         Args:
             memory: Memory object to store
+            auth_context: Optional authentication context dict
             
         Returns:
             Dict with status and memory_id
         """
+        if auth_context and memory.agent_id != auth_context.get("agent_id"):
+            return {
+                "status": "error",
+                "message": "Agent ID mismatch with authentication",
+            }
         key = (memory.agent_id, memory.memory_id)
         self._memories[key] = memory
         return {
@@ -55,16 +63,24 @@ class InMemoryMemoryStore(MemoryInterface):
             "memory_id": memory.memory_id,
         }
     
-    def get_memory(self, agent_id: str, memory_id: str) -> Memory | None:
+    def get_memory(
+        self,
+        agent_id: str,
+        memory_id: str,
+        auth_context: dict[str, Any] | None = None,
+    ) -> Memory | None:
         """Retrieve a memory by ID.
         
         Args:
             agent_id: Agent identifier
             memory_id: Memory identifier
+            auth_context: Optional authentication context dict
             
         Returns:
             Memory object if found, None otherwise
         """
+        if auth_context and auth_context.get("agent_id") != agent_id:
+            return None
         key = (agent_id, memory_id)
         return self._memories.get(key)
     
@@ -73,6 +89,7 @@ class InMemoryMemoryStore(MemoryInterface):
         agent_id: str,
         memory_type: MemoryType | None = None,
         tags: list[str] | None = None,
+        auth_context: dict[str, Any] | None = None,
     ) -> list[MemorySummary]:
         """List memories for an agent with optional filtering.
         
@@ -92,10 +109,13 @@ class InMemoryMemoryStore(MemoryInterface):
             agent_id: Agent identifier
             memory_type: Optional filter by memory type
             tags: Optional filter by tags
+            auth_context: Optional authentication context dict
             
         Returns:
             List of MemorySummary objects
         """
+        if auth_context and auth_context.get("agent_id") != agent_id:
+            return []
         results = []
         
         for (aid, mid), memory in self._memories.items():
@@ -139,16 +159,27 @@ class InMemoryMemoryStore(MemoryInterface):
         # This would be implemented in a more sophisticated backend
         return {"status": "ok"}
     
-    def delete_memory(self, agent_id: str, memory_id: str) -> dict[str, Any]:
+    def delete_memory(
+        self,
+        agent_id: str,
+        memory_id: str,
+        auth_context: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """Delete a memory from the store.
         
         Args:
             agent_id: Agent identifier
             memory_id: Memory identifier
+            auth_context: Optional authentication context dict
             
         Returns:
             Dict with status
         """
+        if auth_context and auth_context.get("agent_id") != agent_id:
+            return {
+                "status": "error",
+                "message": "Agent ID mismatch with authentication",
+            }
         key = (agent_id, memory_id)
         if key in self._memories:
             del self._memories[key]

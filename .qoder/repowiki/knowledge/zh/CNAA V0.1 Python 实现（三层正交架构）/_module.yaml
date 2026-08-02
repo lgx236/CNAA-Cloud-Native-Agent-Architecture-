@@ -1,9 +1,0 @@
-schema_version: 1
-module_path: ""
-title: CNAA V0.1 Python 实现（三层正交架构）
-scope:
-    - README.md
-    - README_CN.md
-source_files: []
-depends_on: []
-related_to: []

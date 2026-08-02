@@ -26,19 +26,22 @@ class OpenClawCNAAIntegration:
     
     TODO (when integrating with real OpenClaw):
         - Add connection pooling and retry logic
-        - Add authentication headers
         - Add request/response logging
         - Integrate with OpenClaw's agent lifecycle hooks
         - Add automatic memory condensation on task completion
     """
     
-    def __init__(self, cnaa_server_url: str = "http://localhost:8080"):
+    def __init__(self, cnaa_server_url: str = "http://localhost:8080", api_key: str | None = None):
         """Initialize the integration.
         
         Args:
             cnaa_server_url: URL of the CNAA cloud server
+            api_key: Optional API key for CNAA authentication.
+                     When provided, requests include an Authorization header.
+                     See docs/zh/api-reference-v0.1.md for details.
         """
         self.cnaa_url = cnaa_server_url
+        self.api_key = api_key
     
     def _call_mcp_tool(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         """Call an MCP tool on CNAA server via HTTP.
@@ -50,9 +53,14 @@ class OpenClawCNAAIntegration:
         Returns:
             Tool response dict
         """
+        headers: dict[str, str] = {"Content-Type": "application/json"}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        
         response = requests.post(
             f"{self.cnaa_url}/mcp",
             json={"tool": tool_name, "arguments": arguments},
+            headers=headers,
             timeout=30,
         )
         return response.json()
@@ -288,8 +296,14 @@ class OpenClawCNAAIntegration:
 if __name__ == "__main__":
     """Example: OpenClaw agent using CNAA for long-term memory."""
     
-    # Initialize CNAA integration
+    # Initialize CNAA integration (without authentication)
     cnaa = OpenClawCNAAIntegration("http://localhost:8080")
+    
+    # Or initialize with API key authentication:
+    # cnaa = OpenClawCNAAIntegration(
+    #     "http://localhost:8080",
+    #     api_key="sk-cnaa-001",
+    # )
     
     # Example 1: Store a completed task experience
     print("Storing task experience...")

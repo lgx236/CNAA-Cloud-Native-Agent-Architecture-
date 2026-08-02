@@ -98,6 +98,18 @@ Agent 通过 **MCP（Model Context Protocol）** 与 CNAA Server 通信，所有
 Agent（MCP Client）──JSON──▶ CNAA Server（MCP Server）──JSON──▶ Agent
 ```
 
+### 安全性设计（可选）
+
+CNAA 支持可选的 API 密钥认证和读写权限控制。认证默认关闭，保持向后兼容。
+
+启用方式：
+```bash
+export CNAA_AUTH_ENABLED=true
+export CNAA_API_KEYS='{"sk-your-key": {"agent_id": "your-agent", "permission": "read_write"}}'
+```
+
+客户端通过 `Authorization: Bearer <key>` 请求头认证。详见 [API 参考文档](docs/zh/api-reference-v0.1.md)。
+
 ---
 
 ## 设计原则

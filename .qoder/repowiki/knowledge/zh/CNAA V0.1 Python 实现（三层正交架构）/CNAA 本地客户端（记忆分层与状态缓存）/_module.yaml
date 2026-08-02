@@ -1,9 +1,0 @@
-schema_version: 1
-module_path: local
-title: CNAA 本地客户端（记忆分层与状态缓存）
-scope:
-    - local/
-source_files: []
-depends_on: []
-related_to:
-    - path: cnaa

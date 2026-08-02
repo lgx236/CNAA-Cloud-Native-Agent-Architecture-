@@ -103,6 +103,18 @@ Agents communicate with CNAA Server exclusively via **MCP (Model Context Protoco
 Agent (MCP Client) ──JSON──▶ CNAA Server (MCP Server) ──JSON──▶ Agent
 ```
 
+### Security (Optional)
+
+CNAA supports optional API key authentication with read/write permission levels. Authentication is disabled by default for backward compatibility.
+
+To enable:
+```bash
+export CNAA_AUTH_ENABLED=true
+export CNAA_API_KEYS='{"sk-your-key": {"agent_id": "your-agent", "permission": "read_write"}}'
+```
+
+Clients authenticate via `Authorization: Bearer <key>` header. See [API Reference](docs/zh/api-reference-v0.1.md) for details.
+
 ---
 
 ## Design Principles

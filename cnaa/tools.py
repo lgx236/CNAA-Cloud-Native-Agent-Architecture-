@@ -222,3 +222,25 @@ def get_tool_by_name(name: str) -> dict[str, Any] | None:
         if tool["name"] == name:
             return tool
     return None
+
+
+# Permission mapping for MCP tools
+# "read" = read-only operation (allowed for READ_ONLY and above)
+# "write" = write operation (requires READ_WRITE or ADMIN)
+TOOL_PERMISSION_MAP: dict[str, str] = {
+    # Read operations
+    GET_MEMORY: "read",
+    LIST_MEMORIES: "read",
+    GET_STATE: "read",
+    GET_PREFERENCE: "read",
+    GET_ENVIRONMENT: "read",
+    # Write operations
+    STORE_MEMORY: "write",
+    DELETE_MEMORY: "write",
+    TAG_SHORT_TERM: "write",
+    UPDATE_STATE: "write",
+    DELETE_STATE: "write",
+    UPDATE_PREFERENCE: "write",
+    DELETE_PREFERENCE: "write",
+    UPDATE_ENVIRONMENT: "write",
+}

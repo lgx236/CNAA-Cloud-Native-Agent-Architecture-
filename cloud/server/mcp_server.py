@@ -27,6 +27,7 @@ from cnaa.models import (
     State,
     StateCategory,
 )
+from cnaa.security import AuthConfig, AuthContext, PermissionLevel, check_permission
 from cnaa.tools import (
     DELETE_MEMORY,
     DELETE_PREFERENCE,
@@ -41,6 +42,7 @@ from cnaa.tools import (
     UPDATE_ENVIRONMENT,
     UPDATE_PREFERENCE,
     UPDATE_STATE,
+    TOOL_PERMISSION_MAP,
     get_tool_definitions,
 )
 from cloud.storage.memory_store import InMemoryMemoryStore
@@ -64,15 +66,18 @@ class CNAA_MCPServer:
         self,
         memory_store: InMemoryMemoryStore | None = None,
         state_store: InMemoryStateStore | None = None,
+        auth_config: AuthConfig | None = None,
     ) -> None:
         """Initialize the MCP server.
         
         Args:
             memory_store: Memory storage backend (defaults to InMemoryMemoryStore)
             state_store: State storage backend (defaults to InMemoryStateStore)
+            auth_config: Authentication configuration (defaults to disabled)
         """
         self.memory_store = memory_store or InMemoryMemoryStore()
         self.state_store = state_store or InMemoryStateStore()
+        self.auth_config = auth_config or AuthConfig()
         self._tool_handlers = self._register_tool_handlers()
     
     def _register_tool_handlers(self) -> dict[str, Any]:
@@ -125,7 +130,34 @@ class CNAA_MCPServer:
                 "status": "error",
                 "message": f"Unknown tool: {tool_name}",
             }
-        
+
+        # Extract auth context injected by HTTP layer
+        auth_context_dict = arguments.pop("_auth_context", None)
+
+        # Permission check
+        if auth_context_dict is not None:
+            auth_context = AuthContext(
+                agent_id=auth_context_dict["agent_id"],
+                permission=PermissionLevel(auth_context_dict["permission"]),
+            )
+            required_level = TOOL_PERMISSION_MAP.get(tool_name)
+            if required_level and not check_permission(auth_context, required_level):
+                return {
+                    "status": "error",
+                    "message": f"Permission denied: {auth_context.permission.value} cannot perform {required_level}",
+                }
+
+            # Verify agent_id consistency
+            request_agent_id = arguments.get("agent_id")
+            if request_agent_id and request_agent_id != auth_context.agent_id:
+                return {
+                    "status": "error",
+                    "message": "Agent ID mismatch: request agent_id does not match authenticated agent",
+                }
+
+            # Re-inject auth_context for storage layer (optional use)
+            arguments["_auth_context"] = auth_context_dict
+
         try:
             return handler(arguments)
         except Exception as e:

@@ -13,6 +13,14 @@
 - [pyproject.toml](file://pyproject.toml)
 </cite>
 
+## 更新摘要
+**所做更改**   
+- 更新了CNAARequestHandler类的详细文档说明
+- 增强了_handle_mcp方法的JSON请求体解析和错误处理描述
+- 完善了HTTP端点（/schemas、/mcp、/health）的文档说明
+- 改进了错误响应格式和状态码处理的描述
+- 添加了完整的实现细节和TODO扩展点说明
+
 ## 目录
 1. [简介](#简介)
 2. [项目结构](#项目结构)
@@ -25,7 +33,9 @@
 9. [结论](#结论)
 
 ## 简介
-本文件聚焦于CNAA项目的HTTP服务入口，说明其如何以标准库HTTP服务器暴露MCP工具调用、接口Schema查询与健康检查能力。该入口采用“JSON入、JSON出”的哑服务原则，将HTTP请求路由到MCP服务端，再由MCP服务端调度存储后端完成记忆与状态管理。
+本文件聚焦于CNAA项目的HTTP服务入口，说明其如何以标准库HTTP服务器暴露MCP工具调用、接口Schema查询与健康检查能力。该入口采用"JSON入、JSON出"的哑服务原则，将HTTP请求路由到MCP服务端，再由MCP服务端调度存储后端完成记忆与状态管理。
+
+**更新** server.py文件现已包含全面的类级文档和方法级文档，详细说明了HTTP端点的功能、实现细节和扩展点。
 
 ## 项目结构
 - 入口脚本：server.py 提供HTTP服务启动、请求处理与路由。
@@ -47,16 +57,16 @@ Handler --> Schemas["Schema接口<br/>get_all_schemas()"]
 ```
 
 图表来源
-- [server.py:40-127](file://server.py#L40-L127)
-- [cloud/server/mcp_server.py:47-131](file://cloud/server/mcp_server.py#L47-L131)
+- [server.py:61-175](file://server.py#L61-L175)
+- [cloud/server/mcp_server.py:52-131](file://cloud/server/mcp_server.py#L52-L131)
 - [cloud/storage/memory_store.py:19-156](file://cloud/storage/memory_store.py#L19-L156)
 - [cloud/storage/state_store.py:13-176](file://cloud/storage/state_store.py#L13-L176)
-- [cnaa/schemas.py:374-411](file://cnaa/schemas.py#L374-L411)
+- [cnaa/schemas.py:388-425](file://cnaa/schemas.py#L388-L425)
 
 章节来源
-- [server.py:1-181](file://server.py#L1-L181)
-- [cloud/server/mcp_server.py:1-299](file://cloud/server/mcp_server.py#L1-L299)
-- [cnaa/schemas.py:1-465](file://cnaa/schemas.py#L1-L465)
+- [server.py:1-229](file://server.py#L1-L229)
+- [cloud/server/mcp_server.py:1-355](file://cloud/server/mcp_server.py#L1-L355)
+- [cnaa/schemas.py:1-479](file://cnaa/schemas.py#L1-L479)
 - [cnaa/tools.py:1-210](file://cnaa/tools.py#L1-L210)
 - [cloud/storage/memory_store.py:1-156](file://cloud/storage/memory_store.py#L1-L156)
 - [cloud/storage/state_store.py:1-176](file://cloud/storage/state_store.py#L1-L176)
@@ -68,6 +78,11 @@ Handler --> Schemas["Schema接口<br/>get_all_schemas()"]
 - HTTP入口与路由
   - 使用标准库HTTPServer与自定义BaseHTTPRequestHandler子类处理请求。
   - 支持GET /schemas（返回全部接口Schema）、GET /health（健康检查）、POST /mcp（MCP工具调用）。
+- CNAARequestHandler类
+  - **新增** 完整的类级文档说明，包含端点列表、实现细节和扩展点。
+  - 路径分发：do_GET/do_POST方法根据路径路由到相应的处理方法。
+  - JSON处理：统一的请求体解析和响应序列化。
+  - 错误处理：完善的异常捕获和状态码返回。
 - MCP服务端
   - 集中注册并分发13个MCP工具，分别覆盖记忆、状态、偏好与环境操作。
   - 通过handle_tool_call进行统一路由与异常封装。
@@ -78,16 +93,18 @@ Handler --> Schemas["Schema接口<br/>get_all_schemas()"]
   - cnaa/schemas.py：集中维护所有请求/响应/数据Schema，供客户端动态发现。
   - cnaa/tools.py：集中定义工具名称、描述与输入Schema引用。
 
+**更新** CNAARequestHandler类现在包含详细的文档注释，明确说明了三个HTTP端点的功能和实现方式。
+
 章节来源
-- [server.py:40-127](file://server.py#L40-L127)
+- [server.py:61-175](file://server.py#L61-L175)
 - [cloud/server/mcp_server.py:73-131](file://cloud/server/mcp_server.py#L73-L131)
 - [cloud/storage/memory_store.py:19-156](file://cloud/storage/memory_store.py#L19-L156)
 - [cloud/storage/state_store.py:13-176](file://cloud/storage/state_store.py#L13-L176)
-- [cnaa/schemas.py:374-411](file://cnaa/schemas.py#L374-L411)
+- [cnaa/schemas.py:388-425](file://cnaa/schemas.py#L388-L425)
 - [cnaa/tools.py:57-171](file://cnaa/tools.py#L57-L171)
 
 ## 架构总览
-下图展示从HTTP请求到存储后端的完整调用链，体现“HTTP入口 → 请求处理器 → MCP服务端 → 存储后端”的分层设计。
+下图展示从HTTP请求到存储后端的完整调用链，体现"HTTP入口 → 请求处理器 → MCP服务端 → 存储后端"的分层设计。
 
 ```mermaid
 sequenceDiagram
@@ -111,8 +128,8 @@ H-->>C : "HTTP 200 + JSON"
 ```
 
 图表来源
-- [server.py:77-123](file://server.py#L77-L123)
-- [cloud/server/mcp_server.py:95-131](file://cloud/server/mcp_server.py#L95-L131)
+- [server.py:111-148](file://server.py#L111-L148)
+- [cloud/server/mcp_server.py:100-136](file://cloud/server/mcp_server.py#L100-L136)
 - [cloud/storage/memory_store.py:30-143](file://cloud/storage/memory_store.py#L30-L143)
 - [cloud/storage/state_store.py:41-145](file://cloud/storage/state_store.py#L41-L145)
 
@@ -131,6 +148,8 @@ H-->>C : "HTTP 200 + JSON"
   - JSON解析失败返回400。
   - 未知路径返回404。
   - 其他异常捕获并返回500。
+
+**更新** _handle_mcp方法现在包含详细的文档注释，说明了JSON请求体解析、MCP工具提取和错误响应格式的完整流程。
 
 ```mermaid
 flowchart TD
@@ -152,10 +171,10 @@ BadReq --> End
 ```
 
 图表来源
-- [server.py:52-127](file://server.py#L52-L127)
+- [server.py:86-148](file://server.py#L86-L148)
 
 章节来源
-- [server.py:40-127](file://server.py#L40-L127)
+- [server.py:61-175](file://server.py#L61-L175)
 
 ### MCP服务端 CNAA_MCPServer
 - 职责
@@ -201,13 +220,13 @@ CNAA_MCPServer --> InMemoryStateStore : "使用"
 ```
 
 图表来源
-- [cloud/server/mcp_server.py:47-131](file://cloud/server/mcp_server.py#L47-L131)
+- [cloud/server/mcp_server.py:52-131](file://cloud/server/mcp_server.py#L52-L131)
 - [cloud/storage/memory_store.py:19-156](file://cloud/storage/memory_store.py#L19-L156)
 - [cloud/storage/state_store.py:13-176](file://cloud/storage/state_store.py#L13-L176)
 
 章节来源
 - [cloud/server/mcp_server.py:73-131](file://cloud/server/mcp_server.py#L73-L131)
-- [cloud/server/mcp_server.py:132-299](file://cloud/server/mcp_server.py#L132-L299)
+- [cloud/server/mcp_server.py:132-355](file://cloud/server/mcp_server.py#L132-L355)
 
 ### 存储后端
 - InMemoryMemoryStore
@@ -247,7 +266,7 @@ G --> H["返回列表"]
   - get_tool_definitions() 供MCP服务端获取工具元数据。
 
 章节来源
-- [cnaa/schemas.py:374-411](file://cnaa/schemas.py#L374-L411)
+- [cnaa/schemas.py:388-425](file://cnaa/schemas.py#L388-L425)
 - [cnaa/tools.py:57-171](file://cnaa/tools.py#L57-L171)
 
 ### 数据模型与交互接口
@@ -283,14 +302,14 @@ StateStore --> Interaction
 ```
 
 图表来源
-- [server.py:29-31](file://server.py#L29-L31)
-- [cloud/server/mcp_server.py:17-43](file://cloud/server/mcp_server.py#L17-L43)
+- [server.py:50-51](file://server.py#L50-L51)
+- [cloud/server/mcp_server.py:22-47](file://cloud/server/mcp_server.py#L22-L47)
 - [cloud/storage/memory_store.py:15-16](file://cloud/storage/memory_store.py#L15-L16)
 - [cloud/storage/state_store.py:9-10](file://cloud/storage/state_store.py#L9-L10)
 
 章节来源
-- [server.py:29-31](file://server.py#L29-L31)
-- [cloud/server/mcp_server.py:17-43](file://cloud/server/mcp_server.py#L17-L43)
+- [server.py:50-51](file://server.py#L50-L51)
+- [cloud/server/mcp_server.py:22-47](file://cloud/server/mcp_server.py#L22-L47)
 - [cloud/storage/memory_store.py:15-16](file://cloud/storage/memory_store.py#L15-L16)
 - [cloud/storage/state_store.py:9-10](file://cloud/storage/state_store.py#L9-L10)
 
@@ -303,6 +322,8 @@ StateStore --> Interaction
   - 当前为内存实现，查询为线性扫描，时间复杂度O(n)，适用于小规模数据；生产应替换为持久化存储并引入索引与分页。
 - 可扩展性
   - 通过MemoryInterface与StateInterface可无缝替换存储实现，便于水平扩展与多后端切换。
+
+**更新** server.py文件包含了详细的TODO注释，指出了生产环境的改进方向，包括认证、CORS、请求日志中间件等。
 
 [本节为通用指导，不直接分析具体文件]
 
@@ -320,9 +341,13 @@ StateStore --> Interaction
   - 确保工具名与cnaa/tools.py一致。
   - 生产环境替换为持久化存储并添加重试与降级策略。
 
+**更新** 错误处理现在更加完善，包括JSON解析错误的专门处理和详细的异常日志记录。
+
 章节来源
-- [server.py:77-123](file://server.py#L77-L123)
-- [cloud/server/mcp_server.py:95-123](file://cloud/server/mcp_server.py#L95-L123)
+- [server.py:111-148](file://server.py#L111-L148)
+- [cloud/server/mcp_server.py:100-136](file://cloud/server/mcp_server.py#L100-L136)
 
 ## 结论
-HTTP服务入口以简洁清晰的分层设计实现了MCP工具的标准化访问：HTTP层负责路由与协议转换，MCP层负责工具分发与业务编排，存储层提供可插拔的数据持久化。通过集中化的Schema与工具定义，系统具备良好的可发现性与扩展性。后续可在生产环境中替换存储后端、增强并发与监控能力，以满足更高负载与稳定性要求。
+HTTP服务入口以简洁清晰的分层设计实现了MCP工具的标准化访问：HTTP层负责路由与协议转换，MCP层负责工具分发与业务编排，存储层提供可插拔的数据持久化。通过集中化的Schema与工具定义，系统具备良好的可发现性与扩展性。
+
+**更新** server.py文件现在包含全面的文档注释和改进的错误处理机制，为后续开发和生产部署提供了清晰的指导。后续可在生产环境中替换存储后端、增强并发与监控能力，以满足更高负载与稳定性要求。
