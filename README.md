@@ -134,6 +134,7 @@ Clients authenticate via `Authorization: Bearer <key>` header. See [API Referenc
 - 📚 [Architecture Document](docs/en/architecture.md) — Full architectural specification
 - 🗺️ [Architecture Vision v0.1](docs/en/architecture-vision-v0.1.md) — Design rationale and v0.1 scope
 - 🔌 [API Reference v0.1](docs/en/api-reference-v0.1.md) — Interface specification and MCP tool definitions
+- 🔧 [Technical Implementation](docs/zh/technical-implementation.md) — Detailed implementation guide with function-level documentation, call chains, and algorithms
 - 📖 [中文文档](docs/zh/) — Chinese documentation
 
 ---
@@ -168,9 +169,9 @@ Clients authenticate via `Authorization: Bearer <key>` header. See [API Referenc
 
 ## Project Status
 
-> **V0.1 interface specification is complete.**
+> **V0.1 reference implementations are complete.**
 >
-> Core data models, interaction interfaces, MCP tool definitions, and lifecycle rules have been implemented. Reference implementations (cloud server and local SDK) are under development.
+> Core data models, interaction interfaces, MCP tool definitions, and lifecycle rules have been implemented. Cloud server (HTTP + stdio MCP) and local SDK (MCP Client + Instant Memory + State Cache) reference implementations are fully functional. See the [Technical Implementation Guide](docs/zh/technical-implementation.md) for detailed function-level documentation.
 
 ---
 

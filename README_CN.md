@@ -128,6 +128,7 @@ export CNAA_API_KEYS='{"sk-your-key": {"agent_id": "your-agent", "permission": "
 
 - 📚 [架构文档](docs/zh/architecture.md) — 完整架构规范
 - 🗺️ [架构设想 v0.1](docs/zh/architecture-vision-v0.1.md) — 设计思路与 v0.1 范围
+- 🔧 [技术实现文档](docs/zh/technical-implementation.md) — 详细实现指南，包含函数级文档、调用链路、算法详解与修改扩展指南
 
 ---
 
@@ -158,9 +159,9 @@ export CNAA_API_KEYS='{"sk-your-key": {"agent_id": "your-agent", "permission": "
 
 ## 项目状态
 
-> **本项目目前处于架构设计阶段（v0.1-draft）。**
+> **V0.1 参考实现已完成。**
 >
-> 架构规范与参考实现正在积极设计中，尚未发布任何代码。
+> 核心数据模型、交互接口、MCP 工具定义和生命周期规则均已实现。云端服务（HTTP + stdio MCP）和本地 SDK（MCP Client + 即时记忆 + 状态缓存）参考实现已可正常运行。详见 [技术实现文档](docs/zh/technical-implementation.md)。
 
 ---
 
