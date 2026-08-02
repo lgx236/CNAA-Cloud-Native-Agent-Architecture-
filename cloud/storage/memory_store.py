@@ -208,3 +208,25 @@ class InMemoryMemoryStore(MemoryInterface):
             Number of memories in store
         """
         return len(self._memories)
+    
+    def get_memory_scores(
+        self,
+        agent_id: str,
+        access_counts: dict[str, int] | None = None,
+        context: dict[str, Any] | None = None,
+    ) -> list[dict[str, Any]]:
+        """Get scored memories for an agent.
+        
+        Note: This is a placeholder implementation.
+        Full scoring integration should use MemoryScoringBackend.
+        
+        Args:
+            agent_id: The agent identifier.
+            access_counts: Optional dict mapping memory_id to access count.
+            context: Optional context for relevance scoring.
+        
+        Returns:
+            Empty list (to be implemented with scoring backend).
+        """
+        # Placeholder - will integrate with MemoryScoringBackend later
+        return []

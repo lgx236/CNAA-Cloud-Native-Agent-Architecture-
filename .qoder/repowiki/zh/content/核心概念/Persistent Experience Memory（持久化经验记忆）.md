@@ -4,7 +4,20 @@
 **本文引用的文件**   
 - [README.md](file://README.md)
 - [README_CN.md](file://README_CN.md)
+- [memory_store.py](file://cloud/storage/memory_store.py)
+- [sqlite_memory_store.py](file://cloud/storage/sqlite_memory_store.py)
+- [interaction.py](file://cnaa/interaction.py)
+- [models.py](file://cnaa/models.py)
+- [test_memory_slicing.py](file://tests/test_memory_slicing.py)
 </cite>
+
+## 更新摘要
+**所做更改**   
+- 更新了InMemoryMemoryStore类的增强功能，包括时间范围过滤、分页支持和改进的查询能力
+- 添加了详细的内存存储实现分析
+- 扩展了API使用示例以反映新的查询功能
+- 更新了数据模型和接口规范说明
+- 增加了SQLite存储后端的集成说明
 
 ## 目录
 1. [引言](#引言)
@@ -19,7 +32,7 @@
 10. [附录](#附录)
 
 ## 引言
-本文件面向“持久化经验记忆”这一主题，基于仓库提供的概念与架构说明，系统化阐述：
+本文件面向"持久化经验记忆"这一主题，基于仓库提供的概念与架构说明，系统化阐述：
 - 持久化记忆与传统内存系统的本质区别
 - 如何将 AI Agent 的经验从临时上下文转换为可持久化的运行时资源
 - 经验数据的结构定义、存储格式、版本控制机制
@@ -28,7 +41,7 @@
 - 数据模型示例与 API 使用示例
 - 与不同存储后端的集成方式与配置选项
 
-需要特别说明的是：当前仓库为概念性文档仓库，未包含具体实现代码。因此，本节内容以仓库中明确提出的“Experience Runtime”和“Persistent Memory”为核心，结合通用工程实践给出可落地的设计与建议，便于后续在真实工程中落地实施。
+需要特别说明的是：当前仓库为概念性文档仓库，未包含具体实现代码。因此，本节内容以仓库中明确提出的"Experience Runtime"和"Persistent Memory"为核心，结合通用工程实践给出可落地的设计与建议，便于后续在真实工程中落地实施。
 
 **章节来源**
 - [README.md:9-41](file://README.md#L9-L41)
@@ -65,11 +78,11 @@ S1 --> S2
 
 **图表来源**
 - [README.md:55-72](file://README.md#L55-L72)
-- [README_CN.md:63-80](file://README_CN.md#L63-L80)
+- [README_CN.md:63-80](file://README_CN.md#L63-80)
 
 **章节来源**
 - [README.md:55-72](file://README.md#L55-L72)
-- [README_CN.md:63-80](file://README_CN.md#L63-L80)
+- [README_CN.md:63-80](file://README_CN.md#L63-80)
 
 ## 核心组件
 根据 README 的架构描述，核心组件包括：
@@ -79,14 +92,14 @@ S1 --> S2
 - Agent 适配器（Agent Adapter）：解耦不同 Agent 的实现细节，提供统一接入点
 - 状态服务（State Service）：对外提供 MCP / HTTP 接口，承载并发访问与一致性保障
 
-这些组件共同构成“经验运行时”，使经验成为独立于 Agent 推理过程的运行时资源。
+这些组件共同构成"经验运行时"，使经验成为独立于 Agent 推理过程的运行时资源。
 
 **章节来源**
 - [README.md:55-72](file://README.md#L55-L72)
-- [README_CN.md:63-80](file://README_CN.md#L63-L80)
+- [README_CN.md:63-80](file://README_CN.md#L63-80)
 
 ## 架构总览
-下图展示了从 Agent 到持久化存储的整体调用链，强调“经验运行时”作为中间层的作用。
+下图展示了从 Agent 到持久化存储的整体调用链，强调"经验运行时"作为中间层的作用。
 
 ```mermaid
 sequenceDiagram
@@ -105,7 +118,7 @@ Runtime-->>Agent : "返回操作结果"
 
 **图表来源**
 - [README.md:55-72](file://README.md#L55-L72)
-- [README_CN.md:63-80](file://README_CN.md#L63-L80)
+- [README_CN.md:63-80](file://README_CN.md#L63-80)
 
 ## 详细组件分析
 
@@ -144,11 +157,65 @@ Experience <.. VersionedStore : "持久化"
 
 **图表来源**
 - [README.md:55-72](file://README.md#L55-L72)
-- [README_CN.md:63-80](file://README_CN.md#L63-L80)
+- [README_CN.md:63-80](file://README_CN.md#L63-80)
 
 **章节来源**
 - [README.md:55-72](file://README.md#L55-L72)
-- [README_CN.md:63-80](file://README_CN.md#L63-L80)
+- [README_CN.md:63-80](file://README_CN.md#L63-80)
+
+### 内存存储实现详解
+
+#### InMemoryMemoryStore 增强功能
+InMemoryMemoryStore 类提供了增强的内存存储功能，支持时间范围过滤、分页和高级查询：
+
+**新增功能特性：**
+- **时间范围过滤**：支持 `start_time` 和 `end_time` 参数进行精确的时间段查询
+- **分页支持**：通过 `limit` 参数控制返回结果数量
+- **排序控制**：`reverse` 参数支持按时间倒序或正序排列
+- **多条件过滤**：支持类型过滤、标签过滤和时间范围过滤的组合查询
+
+```mermaid
+flowchart TD
+Query["查询请求"] --> Auth["认证检查"]
+Auth --> FilterType{"类型过滤?"}
+FilterType --> |是| TypeFilter["应用类型过滤"]
+FilterType --> |否| FilterTags{"标签过滤?"}
+TypeFilter --> FilterTags
+FilterTags --> |是| TagFilter["应用标签过滤"]
+FilterTags --> |否| FilterTime{"时间范围过滤?"}
+TagFilter --> FilterTime
+FilterTime --> |是| TimeFilter["应用时间范围过滤"]
+FilterTime --> |否| Sort["排序处理"]
+TimeFilter --> Sort
+Sort --> Limit{"有分页限制?"}
+Limit --> |是| ApplyLimit["应用分页限制"]
+Limit --> |否| Return["返回结果"]
+ApplyLimit --> Return
+```
+
+**图表来源**
+- [memory_store.py:77-155](file://cloud/storage/memory_store.py#L77-L155)
+
+**章节来源**
+- [memory_store.py:77-155](file://cloud/storage/memory_store.py#L77-L155)
+
+#### SQLite 存储后端
+SQLiteMemoryStore 提供了轻量级的持久化存储解决方案：
+
+**数据库设计：**
+- 单文件存储，适合开发和测试环境
+- 自动创建索引优化查询性能
+- WAL模式启用以提高并发性能
+- JSON序列化处理复杂数据类型
+
+**查询优化：**
+- 基于agent_id的复合索引
+- 时间戳索引支持高效时间范围查询
+- 类型索引加速类型过滤
+
+**章节来源**
+- [sqlite_memory_store.py:19-62](file://cloud/storage/sqlite_memory_store.py#L19-L62)
+- [sqlite_memory_store.py:121-171](file://cloud/storage/sqlite_memory_store.py#L121-L171)
 
 ### 序列化与反序列化
 - 序列化目标：
@@ -171,11 +238,11 @@ Write --> End(["结束"])
 
 **图表来源**
 - [README.md:55-72](file://README.md#L55-L72)
-- [README_CN.md:63-80](file://README_CN.md#L63-L80)
+- [README_CN.md:63-80](file://README_CN.md#L63-80)
 
 **章节来源**
 - [README.md:55-72](file://README.md#L55-L72)
-- [README_CN.md:63-80](file://README_CN.md#L63-L80)
+- [README_CN.md:63-80](file://README_CN.md#L63-80)
 
 ### 数据一致性保证
 - 事务性写入：确保经验写入原子性，失败回滚
@@ -199,11 +266,11 @@ TxEnd --> Return
 
 **图表来源**
 - [README.md:55-72](file://README.md#L55-L72)
-- [README_CN.md:63-80](file://README_CN.md#L63-L80)
+- [README_CN.md:63-80](file://README_CN.md#L63-80)
 
 **章节来源**
 - [README.md:55-72](file://README.md#L55-L72)
-- [README_CN.md:63-80](file://README_CN.md#L63-L80)
+- [README_CN.md:63-80](file://README_CN.md#L63-80)
 
 ### 经验检索算法与缓存策略
 - 检索算法：
@@ -228,11 +295,11 @@ UpdateCache --> Return["返回结果"]
 
 **图表来源**
 - [README.md:55-72](file://README.md#L55-L72)
-- [README_CN.md:63-80](file://README_CN.md#L63-L80)
+- [README_CN.md:63-80](file://README_CN.md#L63-80)
 
 **章节来源**
 - [README.md:55-72](file://README.md#L55-L72)
-- [README_CN.md:63-80](file://README_CN.md#L63-L80)
+- [README_CN.md:63-80](file://README_CN.md#L63-80)
 
 ### 备份与恢复机制
 - 备份：
@@ -260,11 +327,11 @@ VerifyRestore --> RestoreEnd["恢复完成"]
 
 **图表来源**
 - [README.md:55-72](file://README.md#L55-L72)
-- [README_CN.md:63-80](file://README_CN.md#L63-L80)
+- [README_CN.md:63-80](file://README_CN.md#L63-80)
 
 **章节来源**
 - [README.md:55-72](file://README.md#L55-L72)
-- [README_CN.md:63-80](file://README_CN.md#L63-L80)
+- [README_CN.md:63-80](file://README_CN.md#L63-80)
 
 ### API 使用示例（概念性）
 - 记录经验：
@@ -274,31 +341,46 @@ VerifyRestore --> RestoreEnd["恢复完成"]
 - 读取经验：
   - GET /experience/{id}?version={n}
   - 响应：经验对象或空
-- 列出经验：
+- 列出经验（增强版）：
   - GET /experiences?taskId={id}&filters={...}
+  - 支持参数：
+    - memory_type: 经验类型过滤
+    - tags: 标签数组过滤
+    - start_time: 起始时间（ISO格式）
+    - end_time: 结束时间（ISO格式）
+    - limit: 返回数量限制
+    - reverse: 是否倒序排列
   - 响应：经验列表
-
-注意：以上为概念性接口设计，实际实现需根据后端存储与协议调整。
 
 **章节来源**
 - [README.md:55-72](file://README.md#L55-L72)
-- [README_CN.md:63-80](file://README_CN.md#L63-L80)
+- [README_CN.md:63-80](file://README_CN.md#L63-80)
 
 ### 与不同存储后端的集成
-- 关系型数据库：适合强一致性场景，利用事务与索引
-- 文档数据库：适合灵活 schema 与高吞吐写入
-- 对象存储：适合大文件与快照备份
-- 缓存系统：Redis/Memcached，用于热点数据加速
 
-配置选项建议：
+#### 内存存储后端（InMemoryMemoryStore）
+适用于开发、测试和临时场景：
+- 零配置启动
+- O(1) 查找复杂度
+- 内存占用随数据量线性增长
+- 不支持持久化
+
+#### SQLite 存储后端（SQLiteMemoryStore）
+适用于单机部署和生产环境：
+- 单文件数据库，易于部署
+- 支持并发读写（WAL模式）
+- 自动索引优化查询性能
+- 支持SQL查询语法
+
+#### 配置选项建议：
 - 连接池大小
 - 超时与重试策略
 - 加密与压缩开关
 - 分片与副本策略
 
 **章节来源**
-- [README.md:55-72](file://README.md#L55-L72)
-- [README_CN.md:63-80](file://README_CN.md#L63-L80)
+- [memory_store.py:17-31](file://cloud/storage/memory_store.py#L17-L31)
+- [sqlite_memory_store.py:19-31](file://cloud/storage/sqlite_memory_store.py#L19-L31)
 
 ## 依赖分析
 - 内部依赖：
@@ -321,11 +403,11 @@ Service --> Storage["持久化存储"]
 
 **图表来源**
 - [README.md:55-72](file://README.md#L55-L72)
-- [README_CN.md:63-80](file://README_CN.md#L63-L80)
+- [README_CN.md:63-80](file://README_CN.md#L63-80)
 
 **章节来源**
 - [README.md:55-72](file://README.md#L55-L72)
-- [README_CN.md:63-80](file://README_CN.md#L63-L80)
+- [README_CN.md:63-80](file://README_CN.md#L63-80)
 
 ## 性能考虑
 - 读写分离：读多写少场景下，使用只读副本提升吞吐
@@ -333,6 +415,8 @@ Service --> Storage["持久化存储"]
 - 异步处理：非关键路径操作异步化，降低延迟
 - 缓存命中率：优化缓存键与过期策略，提升命中率
 - 索引优化：针对高频查询字段建立合适索引
+- **时间范围查询优化**：利用时间戳索引加速时间段查询
+- **分页查询优化**：避免大结果集传输，提升响应速度
 
 [本节为通用性能建议，无需特定文件引用]
 
@@ -342,6 +426,8 @@ Service --> Storage["持久化存储"]
   - 写入冲突：查看并发写入日志与锁机制
   - 缓存不一致：清理缓存并重新加载
   - 备份恢复失败：校验备份文件完整性与权限
+  - **时间范围查询无结果**：检查时间戳格式和时区设置
+  - **分页查询异常**：验证limit参数范围和排序逻辑
 - 诊断工具：
   - 启用详细日志
   - 监控关键指标（QPS、延迟、错误率）
@@ -350,7 +436,9 @@ Service --> Storage["持久化存储"]
 [本节为通用故障排查建议，无需特定文件引用]
 
 ## 结论
-CNAA 提出的“持久化经验记忆”将经验从临时上下文提升为独立运行时资源，通过 Experience Runtime SDK 与 CNAA State Service 的协作，实现了经验的持续积累、同步与复用。尽管当前仓库尚未包含具体实现代码，但其架构设计为后续落地提供了清晰的方向。建议在实施过程中重点关注数据模型设计、一致性保证与性能优化，以确保系统在大规模场景下的稳定与高效。
+CNAA 提出的"持久化经验记忆"将经验从临时上下文提升为独立运行时资源，通过 Experience Runtime SDK 与 CNAA State Service 的协作，实现了经验的持续积累、同步与复用。尽管当前仓库尚未包含具体实现代码，但其架构设计为后续落地提供了清晰的方向。建议在实施过程中重点关注数据模型设计、一致性保证与性能优化，以确保系统在大规模场景下的稳定与高效。
+
+**重要更新**：最新的InMemoryMemoryStore实现已经具备了强大的时间范围过滤、分页支持和多条件查询能力，为实际应用提供了坚实的基础。
 
 [本节为总结性内容，无需特定文件引用]
 
@@ -359,6 +447,8 @@ CNAA 提出的“持久化经验记忆”将经验从临时上下文提升为独
   - 经验（Experience）：任务执行过程中产生的可复用知识
   - 运行时（Runtime）：支撑经验管理的执行环境
   - 状态服务（State Service）：提供统一状态访问的后端服务
+  - 时间范围过滤：基于时间戳的精确时间段查询
+  - 分页查询：控制结果集大小的查询优化技术
 - 参考链接：
   - [README.md](file://README.md)
   - [README_CN.md](file://README_CN.md)

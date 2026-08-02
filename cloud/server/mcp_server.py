@@ -45,8 +45,10 @@ from cnaa.tools import (
     TOOL_PERMISSION_MAP,
     get_tool_definitions,
 )
-from cloud.storage.memory_store import InMemoryMemoryStore
-from cloud.storage.state_store import InMemoryStateStore
+from cloud.storage.memory_store import MemoryInterface
+from cloud.storage.sqlite_memory_store import SQLiteMemoryStore
+from cloud.storage.state_store import StateInterface
+from cloud.storage.sql_state_store import SqliteStateStore
 
 logger = logging.getLogger(__name__)
 
@@ -64,19 +66,46 @@ class CNAA_MCPServer:
     
     def __init__(
         self,
-        memory_store: InMemoryMemoryStore | None = None,
-        state_store: InMemoryStateStore | None = None,
+        memory_store: MemoryInterface | None = None,
+        state_store: StateInterface | None = None,
         auth_config: AuthConfig | None = None,
     ) -> None:
         """Initialize the MCP server.
         
         Args:
-            memory_store: Memory storage backend (defaults to InMemoryMemoryStore)
-            state_store: State storage backend (defaults to InMemoryStateStore)
+            memory_store: Memory storage backend (defaults to SQLiteMemoryStore)
+            state_store: State storage backend (defaults to SqliteStateStore)
             auth_config: Authentication configuration (defaults to disabled)
         """
-        self.memory_store = memory_store or InMemoryMemoryStore()
-        self.state_store = state_store or InMemoryStateStore()
+        # Use SQLite by default for production readiness
+        if memory_store is None:
+            import os
+            db_path = os.getenv("CNAA_DB_PATH", "cnaa_memories.db")
+            try:
+                self.memory_store = SQLiteMemoryStore(db_path)
+                logger.info(f"Using SQLite memory store: {db_path}")
+            except Exception as e:
+                logger.warning(f"Failed to init SQLite, falling back to memory: {e}")
+                from cloud.storage.memory_store import InMemoryMemoryStore
+                self.memory_store = InMemoryMemoryStore()
+        else:
+            self.memory_store = memory_store
+            
+        if state_store is None:
+            import os
+            try:
+                state_db_path = os.getenv("CNAA_STATE_DB_PATH", "cnaa_states.db")
+                # Import and use sqlite for states too
+                from cloud.storage.sql_state_store import SqliteStateStore
+                self.state_store = SqliteStateStore(state_db_path)
+                logger.info(f"Using SQLite state store: {state_db_path}")
+            except ImportError:
+                # Fallback if not created yet
+                logger.warning("SqliteStateStore not available, using memory")
+                from cloud.storage.state_store import InMemoryStateStore
+                self.state_store = InMemoryStateStore()
+        else:
+            self.state_store = state_store
         self.auth_config = auth_config or AuthConfig()
         self._tool_handlers = self._register_tool_handlers()
     

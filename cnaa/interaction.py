@@ -143,6 +143,32 @@ class MemoryInterface(ABC):
             Example: {"status": "ok"}
         """
         ...
+    
+    # --- Scoring Methods (NEW) ---
+    
+    @abstractmethod
+    def get_memory_scores(
+        self,
+        agent_id: str,
+        access_counts: dict[str, int] | None = None,
+        context: dict[str, Any] | None = None,
+    ) -> list[dict[str, Any]]:
+        """Get scored memories for an agent.
+        
+        Calculate composite scores for all memories and return them
+        sorted by composite score (highest first).
+        
+        Args:
+            agent_id: The agent identifier.
+            access_counts: Optional dict mapping memory_id to access count.
+            context: Optional context for relevance scoring.
+        
+        Returns:
+            List of dicts with memory summaries and scores.
+            Each dict contains: memory_id, scores (recency, completion, importance, frequency, relevance),
+            composite_score, and original memory fields.
+        """
+        ...
 
 
 # ---------------------------------------------------------------------------

@@ -56,12 +56,18 @@ from cnaa.security import (
     validate_api_key,
 )
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
+# Configure logging with file rotation
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+# File handler (rotating, max 10MB each, keep 5 files)
+try:
+    from logging.handlers import RotatingFileHandler
+    file_handler = RotatingFileHandler('cnaa.log', maxBytes=10*1024*1024, backupCount=5)
+    file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+    logger.addHandler(file_handler)
+except ImportError:
+    pass  # Fallback to console-only
 
 
 class CNAARequestHandler(BaseHTTPRequestHandler):

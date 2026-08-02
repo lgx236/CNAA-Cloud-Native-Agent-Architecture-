@@ -3,36 +3,49 @@ schema_version: 1
 locale: zh-CN
 branch: main
 nodes_managed: true
-exported_at: "2026-08-02T11:16:49Z"
+exported_at: "2026-08-02T14:17:41Z"
 modules:
     "":
-        dir_name: CNAA V0.1 云端-本地双模式 Agent 架构（Python 实现）
-        title: CNAA V0.1 云端-本地双模式 Agent 架构（Python 实现）
+        dir_name: CNAA 云原生智能体架构框架
+        title: CNAA 云原生智能体架构框架
         scope: []
         source_files: []
         children:
-            - examples
+            - cnaa
+            - docs
             - tests
         depends_on: []
         related_to: []
-    examples:
-        dir_name: OpenClaw 集成示例（CNAA 云端记忆客户端）
-        title: OpenClaw 集成示例（CNAA 云端记忆客户端）
+    cnaa:
+        dir_name: CNAA 安全认证与 MCP 工具定义
+        title: CNAA 安全认证与 MCP 工具定义
         scope:
-            - examples/README.md
-            - examples/openclaw_integration.py
+            - cnaa/security.py
+            - cnaa/tools.py
         source_files: []
         children: []
         depends_on: []
         related_to:
+            - path: docs
             - path: tests
-    tests:
-        dir_name: CNAA 测试套件（单元测试与集成测试）
-        title: CNAA 测试套件（单元测试与集成测试）
+    docs:
+        dir_name: CNAA 中文文档（接口规范与技术实现）
+        title: CNAA 中文文档（接口规范与技术实现）
         scope:
-            - tests/
+            - docs/zh/api-reference-v0.1.md
+            - docs/zh/technical-implementation.md
         source_files: []
         children: []
         depends_on: []
         related_to:
-            - path: examples
+            - path: cnaa
+    tests:
+        dir_name: tests
+        title: tests
+        scope:
+            - tests/test_security.py
+        source_files: []
+        children: []
+        depends_on: []
+        related_to:
+            - path: cnaa

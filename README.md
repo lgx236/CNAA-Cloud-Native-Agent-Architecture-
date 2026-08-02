@@ -74,14 +74,42 @@ python mcp_stdio_server.py
 
 ## Architecture
 
-CNAA consists of four main components:
+CNAA follows a **layered orthogonal architecture** with clear separation of concerns:
 
-1. **cnaa/** - Core modules defining data models (Memory, State, Preference, Environment) and interaction interfaces
-2. **cloud/** - Cloud-side reference implementation with MCP server
-3. **local/** - Local client with instant memory manager and state cache
-4. **mcp_stdio_server.py** - Standalone MCP stdio server entry point
+```
+┌─────────────────────┐          ┌─────────────────────────┐
+│    Local Agent      │          │     CNAA Cloud Server   │
+│                     │          │                         │
+│  ┌───────────────┐  │   MCP    │  ┌───────────────────┐  │
+│  │ Memory Chopper│  │◀──────▶│  │  MCPServer         │  │
+│  └───────────────┘  │          │  ├───────────────────┤  │
+│  ┌───────────────┐  │          │  │ Memory Store      │  │
+│  │ MCP Client    │  │          │  │ State Store       │  │
+│  └───────────────┘  │          │  └───────────────────┘  │
+└─────────────────────┘          └─────────────────────────┘
+        HTTP over Network (MCP Protocol)
+```
 
-All components share the same schema definitions from `cnaa/schemas.py`.
+### Core Components
+
+1. **cnaa/** - Interface contract layer: data models, schemas, abstract interfaces
+2. **cloud/** - Cloud reference implementation: MCP server + storage backends
+3. **local/** - Local runtime: memory chopper, instant memory, MCP client
+4. **server.py / mcp_stdio_server.py** - HTTP and stdio entry points
+
+### Data Flow
+
+```
+Agent Action → Memory Chopper → [Key Info → Instant Memory] + 
+                                    [Full Data + Tags → Cloud via MCP]
+
+Retrieval: Query Cloud/Local → Combine Results → Return Most Relevant
+```
+
+For complete architecture details, see:
+- **[Complete System Architecture](docs/ARCHITECTURE_COMPLETE.md)** 📖
+- **[Safe Development Guidelines](docs/SCORING_SAFE_DEVELOPMENT.md)** 🔧
+- **[Change Impact Analysis](docs/SCORING_CHANGE_ANALYSIS.md)** ⚠️
 
 ## MCP Tools
 
