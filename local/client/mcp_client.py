@@ -126,9 +126,9 @@ class CNAA_MCPClient:
             headers["Authorization"] = f"Bearer {self.api_key}"
 
         # Placeholder for actual MCP call
-        logger.warning(
+        logger.debug(
             f"No mock handler set. In production, this would call {tool_name} "
-            f"on {self.server_url}"
+            f"on {self.server_url} with headers: {headers}"
         )
         return {
             "status": "error",

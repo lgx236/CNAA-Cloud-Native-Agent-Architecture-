@@ -5,9 +5,7 @@ This is a simple implementation for testing and development.
 Can be replaced with persistent storage backends.
 
 Algorithm responsibilities:
-- IMPLEMENTED: Dict-based CRUD, tag filtering, type filtering
-- TODO (production): Replace with persistent storage (SQLite, PostgreSQL)
-- TODO (algorithm): Implement indexing for efficient tag/type queries
+- IMPLEMENTED: Dict-based CRUD, tag filtering, type filtering, time range queries
 """
 
 from typing import Any
@@ -23,16 +21,8 @@ class InMemoryMemoryStore(MemoryInterface):
     Suitable for testing and development.
 
     IMPLEMENTED:
-        - Dict-based CRUD: store/get/delete with O(1) lookup by composite key
-        - list_memories: linear scan with optional type/tag filters — O(n)
-        - tag_short_term: no-op for in-memory (all memories are local)
-        - Auto-timestamp on store via Memory model __post_init__
-
-    TODO (algorithm extension point):
-        - Replace with persistent storage (SQLite, PostgreSQL)
-        - Add indexing for efficient tag/type queries
-        - Add content hashing for deduplication detection
-        - Add pagination for large result sets
+        - Dict-based CRUD: O(1) lookup by (agent_id, memory_id)
+        - list_memories: linear scan with multi-filter support — O(n)
     """
     
     def __init__(self) -> None:
@@ -90,25 +80,33 @@ class InMemoryMemoryStore(MemoryInterface):
         memory_type: MemoryType | None = None,
         tags: list[str] | None = None,
         auth_context: dict[str, Any] | None = None,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
+        limit: int | None = None,
+        reverse: bool = False,
     ) -> list[MemorySummary]:
         """List memories for an agent with optional filtering.
         
         IMPLEMENTED:
             Linear scan of all memories for the agent.
-            Applies type filter (exact match) and tag filter (any match).
-            Returns MemorySummary (no full content).
+            Applies type filter (exact match), tag filter (any match),
+            and time range filter (start <= timestamp <= end).
+            Supports pagination via limit parameter.
             Time complexity: O(n) where n = memories for this agent.
-        
-        TODO (algorithm extension point):
-            - Add index on (agent_id, type) for O(1) type filtering
-            - Add inverted index on tags for efficient tag queries
-            - Support pagination (limit, offset)
-            - Support sorting (by timestamp, completion_score)
+            
+            Filter operations:
+            - Type filter: exact match
+            - Tag filter: any matching tag
+            - Time range: start <= timestamp <= end
         
         Args:
             agent_id: Agent identifier
             memory_type: Optional filter by memory type
             tags: Optional filter by tags
+            start_time: Optional start time (inclusive)
+            end_time: Optional end time (inclusive)
+            limit: Optional maximum number of results
+            reverse: If True, return newest first
             auth_context: Optional authentication context dict
             
         Returns:
@@ -131,6 +129,13 @@ class InMemoryMemoryStore(MemoryInterface):
                 if not any(tag in memory.tags for tag in tags):
                     continue
             
+            # Filter by time range
+            if memory.timestamp is not None:
+                if start_time is not None and memory.timestamp < start_time:
+                    continue
+                if end_time is not None and memory.timestamp > end_time:
+                    continue
+            
             # Create summary
             summary = MemorySummary(
                 memory_id=memory.memory_id,
@@ -139,6 +144,13 @@ class InMemoryMemoryStore(MemoryInterface):
                 timestamp=memory.timestamp,
             )
             results.append(summary)
+        
+        # Sort by timestamp (default: newest first)
+        results.sort(key=lambda x: x.timestamp if x.timestamp else datetime.min, reverse=not reverse)
+        
+        # Apply limit
+        if limit is not None:
+            results = results[:limit]
         
         return results
     

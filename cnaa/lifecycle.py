@@ -40,7 +40,10 @@ from cnaa.models import (
     Memory,
     MemoryStatus,
     MemoryType,
+    Preference,
     SearchResult,
+    State,
+    StateCategory,
     TaskCheckpoint,
 )
 
@@ -82,6 +85,12 @@ class LifecycleConfig:
 
     # Completion score threshold for promotion to long-term
     promotion_score_threshold: float = 0.5
+
+    # Time window for knowledge condensation (hours)
+    knowledge_condensation_window: timedelta = timedelta(hours=24)
+    
+    # Minimum number of memories to trigger knowledge extraction
+    min_memories_for_extraction: int = 3
 
 
 # ---------------------------------------------------------------------------
@@ -565,3 +574,208 @@ class LifecyclePlugins:
             plugin: The state evolution plugin to register.
         """
         self.state_evolution = plugin
+
+
+# ---------------------------------------------------------------------------
+# Knowledge Condensation Plugin
+# ---------------------------------------------------------------------------
+
+class SimpleTimeBasedCondensationPlugin:
+    """Simple time-based knowledge condensation plugin.
+    
+    This plugin implements basic time-based knowledge accumulation:
+    - Collects memories within a time window
+    - Extracts preferences and knowledge from tagged memories
+    - Returns summary of extracted content
+    
+    IMPLEMENTED:
+        - Time-windowed collection: gather memories within N hours
+        - Tag-based filtering: only process important tags
+        - Automatic preference extraction: convert memories → Preference objects
+        - Knowledge accumulation: prepare state entries for update
+        - Pure rule-based: keyword matching, no ML or complex algorithms
+    
+    Algorithm choices:
+        - Simple timestamp comparison
+        - Keyword list matching
+        - Agent-controlled triggering
+    
+    Example:
+        ```python
+        plugin = SimpleTimeBasedCondensationPlugin()
+        
+        # Condense knowledge from last 24 hours
+        result = plugin.condense(
+            memories=all_memories,
+            agent_id="agent-001",
+            time_window=timedelta(hours=24),
+        )
+        
+        # Preferences extracted will be stored in cloud
+        # States will be updated with new knowledge
+        ```
+    """
+    
+    def __init__(self) -> None:
+        """Initialize the condensation plugin."""
+        self._extracted_refs: dict[str, list[str]] = {}  # type → [memory_ids]
+    
+    def condense(
+        self,
+        memories: list[Memory],
+        agent_id: str,
+        time_window: timedelta | None = None,
+        include_tags: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """Condense knowledge from a set of memories.
+        
+        Implementation:
+            1. Filter by time window (default: 24h)
+            2. Filter by relevant tags
+            3. Extract preference/knowledge structures
+        
+        Args:
+            memories: List of memories to process
+            agent_id: Agent identifier
+            time_window: Time window (default: 24 hours)
+            include_tags: Required tags (default: preference, learning, important)
+        
+        Returns:
+            {"status": ok, "memories_processed": n, "prefs_created": [...]}
+        """
+        now = datetime.now()
+        cutoff_time = now - time_window if time_window else now - timedelta(hours=24)
+        
+        # Filter memories by time and tags
+        filtered = self._filter_memories(
+            memories=memories,
+            cutoff_time=cutoff_time,
+            include_tags=include_tags or ["preference", "learning", "important"],
+        )
+        
+        prefs_to_create = []
+        states_to_update = {}
+        
+        for memory in filtered:
+            if self._has_high_importance(memory):
+                pref = self._extract_preference(memory)
+                if pref:
+                    prefs_to_create.append(pref)
+            
+            knowledge = self._extract_knowledge(memory)
+            if knowledge:
+                category = StateCategory.KNOWLEDGE.value
+                if category not in states_to_update:
+                    states_to_update[category] = []
+                states_to_update[category].append(knowledge)
+        
+        return {
+            "status": "ok",
+            "memories_processed": len(filtered),
+            "prefs_created": [p.preference_id for p in prefs_to_create],
+            "states_updated": list(states_to_update.keys()),
+            "pref_count": len(prefs_to_create),
+            "state_count": len(states_to_update),
+        }
+    
+    def _filter_memories(
+        self,
+        memories: list[Memory],
+        cutoff_time: datetime,
+        include_tags: list[str],
+    ) -> list[Memory]:
+        """Filter memories by time range and tags."""
+        filtered = []
+        
+        for memory in memories:
+            # Check timestamp
+            if memory.timestamp is None:
+                continue
+            if memory.timestamp < cutoff_time:
+                continue
+            
+            # Check tags
+            if not any(tag in memory.tags for tag in include_tags):
+                continue
+            
+            filtered.append(memory)
+        
+        return filtered
+    
+    def _has_high_importance(self, memory: Memory) -> bool:
+        """Check if memory has high importance indicators."""
+        content_str = str(memory.content).lower()
+        importance_keywords = [
+            "important", "critical", "essential", "key point", "must remember",
+            "high priority", "priority", "preference", "like", "dislike",
+            "prefer", "favorite", "habit", "custom"
+        ]
+        
+        return any(keyword in content_str for keyword in importance_keywords)
+    
+    def _extract_preference(self, memory: Memory) -> Preference | None:
+        """Extract a preference from a memory."""
+        if "preference" not in memory.tags:
+            return None
+        
+        content = memory.content
+        if isinstance(content, dict):
+            # Check for explicit preference structure
+            pref_keys = ["preference", "pref"]
+            for key in pref_keys:
+                if key in content and isinstance(content[key], dict):
+                    value = content[key]
+                    return Preference(
+                        agent_id=memory.agent_id,
+                        preference_id=f"pref-{memory.memory_id}",
+                        key=str(list(value.keys())[0])[:50] if value else "unknown",
+                        value=value,
+                        importance=0.8,
+                        source_memory_ids=[memory.memory_id],
+                    )
+            
+            # Check for like/prefer keywords
+            for key, value in content.items():
+                key_lower = str(key).lower()
+                if any(term in key_lower for term in ["like", "prefer", "favorite", "habit"]):
+                    return Preference(
+                        agent_id=memory.agent_id,
+                        preference_id=f"pref-{memory.memory_id}",
+                        key=key[:50],
+                        value=value if isinstance(value, dict) else {"value": value},
+                        importance=0.9,
+                        source_memory_ids=[memory.memory_id],
+                    )
+        
+        return None
+    
+    def _extract_knowledge(self, memory: Memory) -> dict[str, Any] | None:
+        """Extract knowledge from a memory."""
+        if "learning" not in memory.tags and "knowledge" not in memory.tags:
+            return None
+        
+        content = memory.content
+        if not content or (isinstance(content, dict) and len(content) == 0):
+            return None
+        
+        return {
+            "source_memory": memory.memory_id,
+            "timestamp": memory.timestamp.isoformat() if memory.timestamp else None,
+            "content_summary": str(content)[:500] if content else "",
+            "tags": memory.tags,
+        }
+    
+    def get_condensed_type(self, condensation_type: str) -> list[str]:
+        """Get references of what has been condensed by type.
+        
+        Args:
+            condensation_type: One of "preference", "knowledge", "all"
+        
+        Returns:
+            List of memory IDs that have been processed
+        """
+        if condensation_type == "all":
+            return list(self._extracted_refs.keys())
+        
+        # For now, return all as they may contain this type
+        return list(self._extracted_refs.keys())

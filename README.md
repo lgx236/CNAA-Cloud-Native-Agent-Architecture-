@@ -1,185 +1,187 @@
-# CNAA
+# CNAA - Cloud Native Agentic Architecture
 
-<p align="center">
+CNAA (Cloud Native Agentic Architecture) is a reference implementation for persistent experience memory in AI agents. It provides data models, interfaces, and MCP-based tools for storing and retrieving task memories across sessions.
 
-**English** | [简体中文](README_CN.md)
+## Overview
 
-</p>
+CNAA allows agents to save task completion records with scores and tags, then retrieve them later via simple API calls. The focus is on providing clean interfaces and reference implementations rather than novel algorithms.
 
-<p align="center">
-<strong>Cloud Native Agentic Architecture</strong><br/>
-<em>An Experience Runtime Framework for AI Agents</em>
-</p>
+Key features:
+- In-memory storage for memories, states, preferences, and environments
+- MCP protocol support (HTTP and stdio modes)
+- Plugin interface for custom storage backends
+- No LLM or reasoning in the server - pure JSON I/O
 
-<p align="center">
-<img src="https://img.shields.io/badge/status-designing-blue" alt="Status">
-<img src="https://img.shields.io/badge/version-v0.1--draft-orange" alt="Version">
-<img src="https://img.shields.io/badge/license-MIT-green" alt="License">
-</p>
+## What CNAA Is Not
 
----
+- An agent framework (you build your agent around CNAA)
+- A workflow engine (just stores results, doesn't orchestrate tasks)
+- A RAG system (no semantic search in v0.1)
+- A production database (in-memory only in this release)
 
-CNAA is an **Experience Runtime Framework** that enables any AI Agent to persist, retrieve, and reuse task experience across sessions — without modifying its internal reasoning.
+## Quick Start
 
-CNAA is **not** an Agent framework. It is **not** a workflow engine. It is **not** another RAG implementation.
+### Installation
 
-Instead, CNAA provides an architectural specification and reference implementations for **Persistent Experience Memory**, making experience an independent runtime resource rather than temporary prompt context.
+```bash
+git clone https://github.com/your-org/CNAA-Cloud-Native-Agent-Architecture-
+cd CNAA-Cloud-Native-Agent-Architecture-
+pip install -e .
+```
 
----
+### Running the Server
 
-## The Problem
+```bash
+python server.py --port 8080
+```
 
-Current AI Agents can solve tasks, but few of them **remember** tasks.
+The server exposes three endpoints:
+- `GET /health` - Health check
+- `GET /schemas` - All JSON schemas
+- `POST /mcp` - MCP tool calls
 
-Most existing memory systems simply extend context windows. CNAA introduces a different approach:
+### Using via HTTP
 
-> **Task Checkpoint + Instant Memory + Cloud Persistence**
+```bash
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/call",
+    "params": {
+      "name": "cnaa_store_memory",
+      "arguments": {
+        "agent_id": "test-agent",
+        "memory_id": "mem-001",
+        "type": "long_term",
+        "content": {"task": "example"}
+      }
+    }
+  }'
+```
 
-Agents accumulate experience in checkpoints, retain lightweight summaries locally, and store full task data in the cloud — achieving pseudo-continuous memory through a "small index → large storage" pattern.
+### Using via MCP Stdio
 
----
+For integrations with agent frameworks that support MCP:
 
-## Key Concepts
+```bash
+# Start stdio server
+python mcp_stdio_server.py
 
-| Concept | Description |
-|---------|-------------|
-| **Task Checkpoint** | The fundamental experience unit. Agents evaluate completion at each checkpoint and upload full task data to CNAA. |
-| **Instant Memory** | A lightweight summary of a checkpoint, retained in the Agent's local context for quick reference. |
-| **Pseudo-Continuous Memory** | Multiple instant memories undergo condensation and eviction, simulating memory continuity through reference pointers to cloud data. |
-
----
+# Agent framework sends JSON-RPC over stdin/stdout
+```
 
 ## Architecture
 
-CNAA adopts a **three-layer orthogonal architecture**. Each layer answers a different dimensional question and is independently modifiable.
+CNAA consists of four main components:
 
-```
-┌───────────────────────────────────────────────────────┐
-│              CNAA Experience Runtime Framework         │
-│                                                       │
-│  ┌─────────────────────────────────────────────────┐  │
-│  │     Interface Contract Layer (What)              │  │
-│  │     Data models · Operation contracts            │  │
-│  │     Protocol formats · Plugin interfaces         │  │
-│  └──────────────────────┬──────────────────────────┘  │
-│                         │                             │
-│  ┌──────────────────────▼──────────────────────────┐  │
-│  │     Runtime Layer (How)                          │  │
-│  │                                                  │  │
-│  │   ┌─────────────────┐  ┌──────────────────────┐ │  │
-│  │   │  Local Runtime   │  │  Remote Runtime      │ │  │
-│  │   │  (Local SDK)     │  │  (CNAA Server)       │ │  │
-│  │   │                  │  │                      │ │  │
-│  │   │ · Instant Memory │  │ · Experience         │ │  │
-│  │   │   Management     │  │   Persistence        │ │  │
-│  │   │ · MCP Client     │  │ · MCP Server         │ │  │
-│  │   │ · Context        │  │ · Plugin Dispatch    │ │  │
-│  │   │   Injection      │  │                      │ │  │
-│  │   └─────────────────┘  └──────────────────────┘ │  │
-│  └──────────────────────────────────────────────────┘  │
-│                         │                             │
-│  ┌──────────────────────▼──────────────────────────┐  │
-│  │     Lifecycle Layer (When)                       │  │
-│  │     Checkpoint state machine                     │  │
-│  │     Instant memory lifecycle                     │  │
-│  │     Experience evolution rules                   │  │
-│  └──────────────────────────────────────────────────┘  │
-│                                                       │
-└───────────────────────────┬───────────────────────────┘
-                            │ Plugin interfaces
-              ┌─────────────┼─────────────┐
-              ▼             ▼             ▼
-        ┌──────────┐  ┌──────────┐  ┌──────────┐
-        │ Storage  │  │Retrieval │  │  Agent   │
-        │ Plugin   │  │ Plugin   │  │ Adapter  │
-        └──────────┘  └──────────┘  └──────────┘
-```
+1. **cnaa/** - Core modules defining data models (Memory, State, Preference, Environment) and interaction interfaces
+2. **cloud/** - Cloud-side reference implementation with MCP server
+3. **local/** - Local client with instant memory manager and state cache
+4. **mcp_stdio_server.py** - Standalone MCP stdio server entry point
 
-### Communication
+All components share the same schema definitions from `cnaa/schemas.py`.
 
-Agents communicate with CNAA Server exclusively via **MCP (Model Context Protocol)** using structured JSON request-response pairs.
+## MCP Tools
 
-```
-Agent (MCP Client) ──JSON──▶ CNAA Server (MCP Server) ──JSON──▶ Agent
-```
+CNAA exposes 13 tools via MCP protocol:
 
-### Security (Optional)
+**Memory operations:**
+- `cnaa_store_memory` - Store a memory
+- `cnaa_get_memory` - Retrieve a specific memory
+- `cnaa_list_memories` - List memories with optional filters
+- `cnaa_tag_short_term` - Tag recent memories
+- `cnaa_delete_memory` - Delete a memory
 
-CNAA supports optional API key authentication with read/write permission levels. Authentication is disabled by default for backward compatibility.
+**State operations:**
+- `cnaa_get_state` - Get all state entries
+- `cnaa_update_state` - Create or update a state
+- `cnaa_delete_state` - Delete a state
 
-To enable:
+**Preference operations:**
+- `cnaa_get_preference` - Get all preferences
+- `cnaa_update_preference` - Create or update a preference
+- `cnaa_delete_preference` - Delete a preference
+
+**Environment operations:**
+- `cnaa_get_environment` - Get environment context
+- `cnaa_update_environment` - Update environment context
+
+## Testing
+
+Run tests with Python 3.12+:
+
 ```bash
-export CNAA_AUTH_ENABLED=true
-export CNAA_API_KEYS='{"sk-your-key": {"agent_id": "your-agent", "permission": "read_write"}}'
+python3 -m pytest tests/ -v
 ```
 
-Clients authenticate via `Authorization: Bearer <key>` header. See [API Reference](docs/zh/api-reference-v0.1.md) for details.
+Tests cover:
+- Data model creation and validation
+- In-memory storage CRUD operations
+- MCP tool routing
+- End-to-end cloud/local integration
+- OpenClaw integration example
 
----
+Current status: 126 tests passing.
 
-## Design Principles
+## Configuration
 
-| Principle | Description |
-|-----------|-------------|
-| **Dumb Service** | CNAA Server only stores and retrieves JSON. No reasoning, no LLM, no content generation. |
-| **Interface First** | All capabilities are defined as interface contracts before implementations. |
-| **Pluggable** | Storage, retrieval, and Agent adapters are all connected through plugin interfaces. |
-| **Local First** | Instant memory stays in Agent context; full data lives in the cloud. |
-| **Highly Customizable** | Clone and freely modify any layer without affecting others. |
+Optional environment variables:
 
----
+```bash
+# Disable authentication (default: true, auth is disabled by default)
+export CNAA_AUTH_ENABLED=false
+
+# Enable API key authentication
+export CNAA_AUTH_ENABLED=true
+export CNAA_API_KEYS='{"sk-key": {"agent_id": "agent-001", "permission": "read_write"}}'
+export CNAA_ALLOW_UNAUTHENTICATED=false
+```
+
+## Extending CNAA
+
+To add a new storage backend:
+
+1. Implement the `MemoryInterface` abstract class from `cnaa.interaction`
+2. Replace `InMemoryMemoryStore` in `cloud/server/mcp_server.py`
+
+Example:
+
+```python
+from cnaa.interaction import MemoryInterface
+from cnaa.models import Memory
+
+class PostgreSQLMemoryStore(MemoryInterface):
+    def store_memory(self, memory: Memory) -> dict:
+        # Save to PostgreSQL
+        pass
+    
+    def get_memory(self, agent_id: str, memory_id: str) -> Memory | None:
+        # Query PostgreSQL
+        pass
+    # ... implement other methods
+```
+
+Then instantiate it in `mcp_server.py`:
+
+```python
+self.memory_store = PostgreSQLMemoryStore()
+```
 
 ## Documentation
 
-- 📚 [Architecture Document](docs/en/architecture.md) — Full architectural specification
-- 🗺️ [Architecture Vision v0.1](docs/en/architecture-vision-v0.1.md) — Design rationale and v0.1 scope
-- 🔌 [API Reference v0.1](docs/en/api-reference-v0.1.md) — Interface specification and MCP tool definitions
-- 🔧 [Technical Implementation](docs/zh/technical-implementation.md) — Detailed implementation guide with function-level documentation, call chains, and algorithms
-- 📖 [中文文档](docs/zh/) — Chinese documentation
-
----
-
-## Roadmap
-
-### v0.1 (Current)
-
-- [x] Architecture specification
-- [x] Interface contract definition (Memory/State/Preference/Environment)
-- [x] MCP tool definitions (13 tools)
-- [x] Lifecycle rules specification
-- [x] API reference documentation (Chinese & English)
-- [ ] CNAA Server reference implementation (MCP Server)
-- [ ] Local SDK reference implementation (MCP Client + Instant Memory management)
-- [ ] Storage plugin — SQLite
-
-### v0.2
-
-- [ ] Retrieval plugin interface and implementations
-- [ ] Instant memory condensation strategy
-- [ ] Multiple retrieval strategies (vector, BM25)
-- [ ] Additional storage backends (PostgreSQL, file system)
-
-### v0.3
-
-- [ ] Multi-Agent experience sharing
-- [ ] Experience association and evolution
-- [ ] Cloud deployment solutions
-
----
+See `docs/en/architecture.md` for architecture specification. See `docs/zh/technical-implementation.md` for detailed function-level documentation. Each module includes:
+- IMPLEMENTED section: what is currently done
+- TODO section: extension points for customization
 
 ## Project Status
 
-> **V0.1 reference implementations are complete.**
->
-> Core data models, interaction interfaces, MCP tool definitions, and lifecycle rules have been implemented. Cloud server (HTTP + stdio MCP) and local SDK (MCP Client + Instant Memory + State Cache) reference implementations are fully functional. See the [Technical Implementation Guide](docs/zh/technical-implementation.md) for detailed function-level documentation.
-
----
+This is version 0.1, released as a working reference implementation. The core specification (data models, interfaces, lifecycle rules) is stable. Future versions will add retrieval plugins, condensation strategies, and additional storage backends.
 
 ## Contributing
 
-This project is in early design. Contributions, discussions, and feedback on the architecture are welcome.
-
----
+Contributions are welcome. Please open issues for bugs, feature requests, or questions about the design.
 
 ## License
 

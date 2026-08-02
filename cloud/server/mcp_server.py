@@ -231,10 +231,32 @@ class CNAA_MCPServer:
         memory_type = MemoryType(args["type"]) if "type" in args else None
         tags = args.get("tags")
         
+        # Parse optional time range parameters
+        start_time = None
+        end_time = None
+        limit = args.get("limit")
+        reverse = args.get("reverse", False)
+        
+        if "start_time" in args:
+            try:
+                start_time = datetime.fromisoformat(str(args["start_time"]).replace("Z", "+00:00"))
+            except (ValueError, AttributeError):
+                pass
+        
+        if "end_time" in args:
+            try:
+                end_time = datetime.fromisoformat(str(args["end_time"]).replace("Z", "+00:00"))
+            except (ValueError, AttributeError):
+                pass
+        
         summaries = self.memory_store.list_memories(
             args["agent_id"],
             memory_type=memory_type,
             tags=tags,
+            start_time=start_time,
+            end_time=end_time,
+            limit=limit,
+            reverse=reverse,
         )
         
         return {
