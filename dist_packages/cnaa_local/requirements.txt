@@ -1,0 +1,8 @@
+requests>=2.31.0
+mcp>=1.0.0
+
+# Optional framework adapters (install as needed)
+# langchain>=0.1.0
+# llama-index>=0.10.0
+# pyautogen>=0.2.0
+# crewai>=0.1.0

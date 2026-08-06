@@ -1,0 +1,64 @@
+# CNAA Local Client Package
+
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cnaa-local"
+version = "0.2.0"
+description = "CNAA Cloud Native Agent Architecture - Local Client Component (Production Ready)"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "CNAA Development Team", email = "dev@cnaa.io"}
+]
+keywords = ["agent", "mcp", "distributed-systems", "memory", "client"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = [
+    "requests>=2.31.0",
+    "mcp>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "mypy>=1.0",
+    "ruff>=0.1.0",
+]
+
+framework-adapters = [
+    # These are optional - install only what you need
+    "langchain>=0.1.0",
+    "llama-index>=0.10.0",
+    "pyautogen>=0.2.0",
+    "crewai>=0.1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/lgx236/CNAA-Cloud-Native-Agent-Architecture-"
+Documentation = "https://github.com/lgx236/CNAA-Cloud-Native-Agent-Architecture-/blob/main/README.md"
+Repository = "https://github.com/lgx236/CNAA-Cloud-Native-Agent-Architecture-.git"
+Issues = "https://github.com/lgx236/CNAA-Cloud-Native-Agent-Architecture-/issues"
+
+[tool.setuptools.packages.find]
+include = ["local*", "cnaa*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
