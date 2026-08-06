@@ -6,18 +6,23 @@
 - [README_CN.md](file://README_CN.md)
 - [memory_store.py](file://cloud/storage/memory_store.py)
 - [sqlite_memory_store.py](file://cloud/storage/sqlite_memory_store.py)
+- [scoring_backend.py](file://cloud/storage/scoring_backend.py)
+- [scoring.py](file://cnaa/scoring.py)
+- [scoring_algorithms.py](file://cnaa/scoring_algorithms.py)
 - [interaction.py](file://cnaa/interaction.py)
 - [models.py](file://cnaa/models.py)
-- [test_memory_slicing.py](file://tests/test_memory_slicing.py)
+- [test_scoring_system.py](file://tests/test_scoring_system.py)
+- [memory_scoring_demo.py](file://examples/memory_scoring_demo.py)
 </cite>
 
 ## 更新摘要
 **所做更改**   
-- 更新了InMemoryMemoryStore类的增强功能，包括时间范围过滤、分页支持和改进的查询能力
-- 添加了详细的内存存储实现分析
-- 扩展了API使用示例以反映新的查询功能
+- 移除了旧的本地评分器实现，采用全新的分布式评分架构
+- 新增了完整的评分后端系统，支持增量更新和批量处理
+- 增强了内存存储的评分集成能力
+- 添加了详细的评分算法实现和多维度评分机制
+- 扩展了API使用示例以反映新的分布式评分功能
 - 更新了数据模型和接口规范说明
-- 增加了SQLite存储后端的集成说明
 
 ## 目录
 1. [引言](#引言)
@@ -163,6 +168,94 @@ Experience <.. VersionedStore : "持久化"
 - [README.md:55-72](file://README.md#L55-L72)
 - [README_CN.md:63-80](file://README_CN.md#L63-80)
 
+### 分布式评分架构详解
+
+#### 评分后端系统（MemoryScoringBackend）
+新的分布式评分架构提供了强大的评分计算和存储能力：
+
+**核心特性：**
+- **增量评分更新**：无需重新计算所有分数，支持高效更新
+- **多维度评分**：时效性、完成度、重要性、频率、相关性五个维度
+- **批量处理能力**：支持大规模记忆的批量评分
+- **上下文感知**：基于当前上下文的智能相关性评分
+- **可配置权重**：支持按Agent自定义评分权重
+
+```mermaid
+flowchart TD
+ScoreRequest["评分请求"] --> Calculate["计算各维度分数"]
+Calculate --> Recency["时效性评分"]
+Calculate --> Completion["完成度评分"]
+Calculate --> Importance["重要性评分"]
+Calculate --> Frequency["频率评分"]
+Calculate --> Relevance["相关性评分"]
+Recency --> Composite["综合评分计算"]
+Completion --> Composite
+Importance --> Composite
+Frequency --> Composite
+Relevance --> Composite
+Composite --> Store["存储评分结果"]
+Store --> Return["返回评分结果"]
+```
+
+**图表来源**
+- [scoring_backend.py:35-75](file://cloud/storage/scoring_backend.py#L35-L75)
+
+**章节来源**
+- [scoring_backend.py:23-75](file://cloud/storage/scoring_backend.py#L23-L75)
+
+#### 评分算法实现
+评分系统实现了多种专业的评分算法：
+
+**时效性评分（RecencyScorer）：**
+- 指数衰减算法：score = 2^(-t/half_life)
+- 支持线性衰减模式
+- 默认半衰期为7天
+
+**完成度评分（CompletionScorer）：**
+- 基于Agent提供的完成度分数
+- 关键词增强：success、completed等关键词提升分数
+- 内容分析：自动识别完成状态
+
+**重要性评分（ImportanceScorer）：**
+- 关键词匹配：critical、important、urgent等高优先级词汇
+- 多级权重：从高到低分为多个等级
+- 显式字段融合：支持用户指定的重要性值
+
+**频率评分（FrequencyScorer）：**
+- 对数缩放：避免高频访问导致分数过高
+- 时间窗口：支持指定回溯期（默认7天）
+- 速率计算：基于访问频率的动态评分
+
+**相关性评分（RelevanceScorer）：**
+- 关键词匹配：Jaccard相似度算法
+- 上下文匹配：基于当前上下文的智能匹配
+- 标签加权：标签匹配给予额外权重
+
+**章节来源**
+- [scoring_algorithms.py:27-397](file://cnaa/scoring_algorithms.py#L27-L397)
+
+#### 评分数据模型
+评分系统定义了完整的数据结构：
+
+**MemoryScores类：**
+- 包含五个维度的评分分数
+- 支持复合分数计算
+- 提供序列化和反序列化功能
+- 支持自定义权重配置
+
+**ScoreRanking类：**
+- 按复合分数排序的记忆列表
+- 支持Top-N查询
+- 提供统计信息（平均分数、总数等）
+
+**ScoreThresholds类：**
+- 配置过滤阈值
+- 支持多维度阈值设置
+- 提供包含判断逻辑
+
+**章节来源**
+- [scoring.py:21-181](file://cnaa/scoring.py#L21-L181)
+
 ### 内存存储实现详解
 
 #### InMemoryMemoryStore 增强功能
@@ -173,6 +266,7 @@ InMemoryMemoryStore 类提供了增强的内存存储功能，支持时间范围
 - **分页支持**：通过 `limit` 参数控制返回结果数量
 - **排序控制**：`reverse` 参数支持按时间倒序或正序排列
 - **多条件过滤**：支持类型过滤、标签过滤和时间范围过滤的组合查询
+- **评分集成**：预留评分系统集成接口
 
 ```mermaid
 flowchart TD
@@ -417,6 +511,7 @@ Service --> Storage["持久化存储"]
 - 索引优化：针对高频查询字段建立合适索引
 - **时间范围查询优化**：利用时间戳索引加速时间段查询
 - **分页查询优化**：避免大结果集传输，提升响应速度
+- **评分计算优化**：增量更新而非全量重算，支持批量处理
 
 [本节为通用性能建议，无需特定文件引用]
 
@@ -428,6 +523,8 @@ Service --> Storage["持久化存储"]
   - 备份恢复失败：校验备份文件完整性与权限
   - **时间范围查询无结果**：检查时间戳格式和时区设置
   - **分页查询异常**：验证limit参数范围和排序逻辑
+  - **评分计算异常**：检查评分权重配置和数据完整性
+  - **分布式评分同步问题**：验证评分后端连接和状态同步
 - 诊断工具：
   - 启用详细日志
   - 监控关键指标（QPS、延迟、错误率）
@@ -436,9 +533,9 @@ Service --> Storage["持久化存储"]
 [本节为通用故障排查建议，无需特定文件引用]
 
 ## 结论
-CNAA 提出的"持久化经验记忆"将经验从临时上下文提升为独立运行时资源，通过 Experience Runtime SDK 与 CNAA State Service 的协作，实现了经验的持续积累、同步与复用。尽管当前仓库尚未包含具体实现代码，但其架构设计为后续落地提供了清晰的方向。建议在实施过程中重点关注数据模型设计、一致性保证与性能优化，以确保系统在大规模场景下的稳定与高效。
+CNAA 提出的"持久化经验记忆"将经验从临时上下文提升为独立运行时资源，通过 Experience Runtime SDK 与 CNAA State Service 的协作，实现了经验的持续积累、同步与复用。最新的分布式评分架构进一步增强了系统的智能化水平，通过多维度评分算法和增量更新机制，为经验的选择和重用提供了强有力的技术支持。
 
-**重要更新**：最新的InMemoryMemoryStore实现已经具备了强大的时间范围过滤、分页支持和多条件查询能力，为实际应用提供了坚实的基础。
+**重要更新**：新的分布式评分架构完全替代了旧的本地评分器，提供了更强大、更灵活的评分能力。评分系统支持五种不同的评分维度，能够综合考虑时效性、完成度、重要性、频率和相关性，为AI Agent提供更智能的经验推荐。
 
 [本节为总结性内容，无需特定文件引用]
 
@@ -449,6 +546,8 @@ CNAA 提出的"持久化经验记忆"将经验从临时上下文提升为独立�
   - 状态服务（State Service）：提供统一状态访问的后端服务
   - 时间范围过滤：基于时间戳的精确时间段查询
   - 分页查询：控制结果集大小的查询优化技术
+  - 分布式评分：基于多维度的智能评分系统
+  - 增量更新：高效的评分更新机制
 - 参考链接：
   - [README.md](file://README.md)
   - [README_CN.md](file://README_CN.md)

@@ -8,17 +8,19 @@ source_files:
     - pyproject.toml
 ---
 
-本仓库使用 Python 标准的 `pyproject.toml` 作为唯一的依赖声明入口，采用 `setuptools.build_meta` 作为构建后端，未引入 Poetry、Pipenv、uv 等第三方包管理器，也未使用 vendoring 或私有 PyPI 源。具体约定如下：
+本仓库采用 Python 标准依赖管理体系，通过 `pyproject.toml` 声明式管理项目依赖、构建系统与开发工具链，未使用虚拟环境锁定文件或私有包仓库。
 
-1. **运行时依赖**：仅声明一个核心依赖 `mcp>=1.0.0`，位于 `[project].dependencies`。
-2. **可选开发依赖**：通过 `[project.optional-dependencies]` 的 `dev` 分组提供 `pytest`、`mypy`、`ruff`，安装时需显式指定 `pip install -e ".[dev]`。
-3. **构建系统**：`requires-python = ">=3.11` 强制最低 Python 版本；`build-system.requires` 锁定 `setuptools>=68.0` 和 `wheel`。
-4. **包发现**：`tool.setuptools.packages.find.include = ["cnaa*"]` 仅打包以 `cnaa` 开头的包。
-5. **代码质量工具配置**：`tool.ruff` 与 `tool.mypy` 在 `pyproject.toml` 中直接声明规则（行宽 100、strict 模式、target-version py311），无需额外配置文件。
-6. **无锁文件**：仓库未包含 `requirements.txt`、`poetry.lock`、`uv.lock` 等锁定文件，依赖版本以宽松下限（`>=`）形式声明，由 pip 在安装时解析。
-7. **无 vendoring / 私有源**：未发现 `vendor/` 目录、`.pypirc`、`pip.conf` 或环境变量中的私有索引配置，所有依赖均从官方 PyPI 获取。
+**使用的系统/工具**
+- 构建系统：`setuptools`（`setuptools.build_meta`），要求版本 `>=68.0`，配合 `wheel` 打包。
+- 包管理器：PEP 517/518 兼容的 `pip` / `uv` / `poetry` 等均可直接解析 `pyproject.toml`。
+- 运行时约束：`requires-python = ">=3.11"`，强制 Python 3.11+。
 
-约束与约束来源：
-- Python 版本不低于 3.11（由 `requires-python` 字段强制执行）。
-- 开发环境需单独启用 `dev` 可选依赖组（由 setuptools 的可选依赖机制保证）。
-- 类型检查与 lint 严格模式由 mypy 的 `strict = true` 与 ruff 的 `line-length = 100` 配置生效。
+**核心依赖声明**
+- 唯一生产依赖：`mcp>=1.0.0`（MCP 协议库）。
+- 可选开发依赖（`[dev]`）：`pytest>=7.0`、`mypy>=1.0`、`ruff>=0.1.0`。
+- 包发现规则：`tool.setuptools.packages.find.include = ["cnaa*"]`，仅打包 `cnaa*` 命名空间下的模块。
+
+**约定与约束**
+- 代码风格与类型检查由 `ruff`（行宽 100、目标 py311）和 `mypy`（strict=true、python_version=3.11）在开发阶段强制执行。
+- 未引入 `requirements.txt`、`poetry.lock`、`uv.lock` 等锁定文件，也未配置 `vendor/` 目录或私有 PyPI 源，依赖版本以宽松下限（`>=`）声明，便于上游更新但可能带来可重现性风险。
+- 所有内部模块通过相对导入组织（如 `cloud.server.mcp_server`、`cnaa.models`、`local.agent`），不依赖外部 vendoring。
