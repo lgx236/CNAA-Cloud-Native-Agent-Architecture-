@@ -1,5 +1,6 @@
 """CNAA monitoring and health check system."""
 
+import asyncio
 import json
 import logging
 from dataclasses import dataclass, field
