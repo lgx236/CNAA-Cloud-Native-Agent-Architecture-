@@ -88,6 +88,14 @@ from cnaa.deprecation import (
     warn_deprecated,
 )
 
+# Error handling
+from cnaa.errors import (
+    CNAAError,
+    StorageError,
+    NotFoundError,
+    ValidationError,
+)
+
 # Security
 from cnaa.security import (
     AuthConfig,
@@ -98,56 +106,21 @@ from cnaa.security import (
 )
 
 __all__ = [
-    # Version
+    # Version info
     "__version__",
     "API_VERSION",
-    "API_COMPATIBILITY_MATRIX",
-    # Data models
+    
+    # Core data models (what users need most)
     "Environment",
-    "InstantMemory",
     "Memory",
-    "MemoryStatus",
-    "MemoryType",
     "Preference",
-    "SearchResult",
     "State",
+    "MemoryType",
     "StateCategory",
-    "TaskCheckpoint",
-    # Schema definitions
-    "get_all_schemas",
-    "get_request_schemas",
-    "get_response_schemas",
-    "get_schema",
-    # Interaction interfaces
-    "MemoryInterface",
-    "StateInterface",
-    # Lifecycle plugins
-    "DefaultStateEvolutionPlugin",
-    "LifecycleConfig",
-    "LifecycleEvent",
-    "LifecyclePlugins",
-    "MemoryLifecyclePlugin",
-    "RetrievalPlugin",
-    "SimpleTimeBasedCondensationPlugin",
-    "StateEvolutionPhase",
-    "StateEvolutionPlugin",
-    "StateEvolutionRule",
-    "TimeBasedLifecyclePlugin",
-    # MCP tools
-    "get_tool_by_name",
-    "get_tool_definitions",
-    "get_tool_names",
-    # Deprecation management
-    "deprecated",
-    "get_deprecation_manager",
-    "is_deprecated",
-    "list_deprecated_items",
-    "mark_deprecated",
-    "warn_deprecated",
-    # Security
+    
+    # Factory functions for storage
+    "create_storage_backend",
+    
+    # Authentication configuration
     "AuthConfig",
-    "AuthContext",
-    "PermissionLevel",
-    "load_auth_config_from_env",
-    "validate_api_key",
 ]
