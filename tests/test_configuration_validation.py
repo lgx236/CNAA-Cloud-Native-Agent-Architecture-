@@ -57,7 +57,7 @@ class TestEnvironmentVariableValidation:
         ]
         
         for key in valid_keys:
-            result = config.validate_request('X-Api-Key', key)
+            result = config.validate_api_key('X-Api-Key', key)
             # Either accepts or rejects, but doesn't crash
             assert isinstance(result, (bool, dict))
 
@@ -112,7 +112,7 @@ class TestAuthConfiguration:
     """Test security settings validation."""
 
     @pytest.mark.unit
-    def test_auth_enabled_with_valid_keys(self):
+    def test_enabled_with_valid_keys(self):
         """Authentication enabled with valid keys works."""
         api_keys_str = '{"sk-valid": {"agent_id": "test", "permission": "read_write"}}'
         
@@ -137,7 +137,7 @@ class TestAuthConfiguration:
             from cnaa.security import AuthConfig
             
             config = AuthConfig()
-            assert not config.auth_enabled or config.auth_enabled == False
+            assert not config.enabled or config.enabled == False
     
     @pytest.mark.unit
     def test_permissions_default_to_read_only(self):
