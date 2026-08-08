@@ -78,6 +78,16 @@ from cnaa.tools import (
     get_tool_names,
 )
 
+# Deprecation management
+from cnaa.deprecation import (
+    deprecated,
+    get_deprecation_manager,
+    is_deprecated,
+    list_deprecated_items,
+    mark_deprecated,
+    warn_deprecated,
+)
+
 __all__ = [
     # Version
     "__version__",
@@ -118,4 +128,11 @@ __all__ = [
     "get_tool_by_name",
     "get_tool_definitions",
     "get_tool_names",
+    # Deprecation management
+    "deprecated",
+    "get_deprecation_manager",
+    "is_deprecated",
+    "list_deprecated_items",
+    "mark_deprecated",
+    "warn_deprecated",
 ]

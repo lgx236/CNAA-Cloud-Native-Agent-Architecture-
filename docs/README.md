@@ -1,7 +1,38 @@
 # CNAA - Cloud Native Agent Architecture
 
 > **智能体框架的远期记忆基础设施**  
-> **Version**: 0.2.0 | **Status**: Production Ready | **Last Updated**: 2026-08-06
+> **Version**: 1.0.0 | **Status**: Production Ready | **Last Updated**: 2026-08-08
+
+---
+
+## 🚀 CNAA v1.0 Release Highlights
+
+### New Features in v1.0
+
+✨ **Production-Ready Monitoring System**
+- Health check endpoint: `GET /health` - Comprehensive system diagnostics
+- Metrics export: `GET /metrics` - Prometheus-compatible metrics
+- Version info: `GET /version` - API version verification
+
+🔧 **Enhanced Testing Infrastructure**
+- Integration tests with cloud-local communication scenarios
+- Edge case and error handling coverage (78+ new tests)
+- Performance stress testing for large payloads
+
+📊 **Complete CI/CD Pipeline**
+- Automated testing via GitHub Actions
+- Code coverage enforcement (≥85% on core modules)
+- Security scanning with Bandit and Safety
+- Automated PyPI publishing and release assets
+
+🔒 **API Stability Guarantees**
+- Semantic versioning policy defined
+- Backward compatibility matrix documented
+- Deprecation management framework
+
+See [RELEASE_NOTES_V1.0.md](../RELEASE_NOTES_V1.0.md) for complete changelog.
+
+---
 
 ## 🎯 项目概述
 
