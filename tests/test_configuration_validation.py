@@ -20,7 +20,7 @@ class TestEnvironmentVariableValidation:
         ]
         
         with patch.dict(os.environ, {'CNAA_SERVER_URL': valid_urls[0]}):
-            from local.client.mcp_client import MCPClient
+            from local.client.mcp_client import CNAA_MCPClient as MCPClient
             # Should not raise exception
             client = MCPClient()
             assert client is not None
@@ -34,7 +34,7 @@ class TestEnvironmentVariableValidation:
         
         try:
             # Client should handle missing URL
-            from local.client.mcp_client import MCPClient
+            from local.client.mcp_client import CNAA_MCPClient as MCPClient
             client = MCPClient()  # No args - uses env
             assert client is not None
         finally:
@@ -45,9 +45,9 @@ class TestEnvironmentVariableValidation:
     
     def test_api_key_format_validation(self):
         """API key format validation."""
-        from cnaa.security import SecurityConfig
+        from cnaa.security import AuthConfig
         
-        config = SecurityConfig()
+        config = AuthConfig()
         
         # Valid-looking keys
         valid_keys = [
@@ -108,7 +108,7 @@ class TestConfigurationFiles:
             os.unlink(temp_env)
 
 
-class TestSecurityConfiguration:
+class TestAuthConfiguration:
     """Test security settings validation."""
 
     @pytest.mark.unit
@@ -120,9 +120,9 @@ class TestSecurityConfiguration:
             'CNAA_AUTH_ENABLED': 'true',
             'CNAA_API_KEYS': api_keys_str
         }):
-            from cnaa.security import SecurityConfig
+            from cnaa.security import AuthConfig
             
-            config = SecurityConfig()
+            config = AuthConfig()
             
             # Should have loaded the API key
             assert hasattr(config, 'api_keys')
@@ -134,9 +134,9 @@ class TestSecurityConfiguration:
             'CNAA_AUTH_ENABLED': 'false',
             'CNAA_ALLOW_UNAUTHENTICATED': 'true'
         }):
-            from cnaa.security import SecurityConfig
+            from cnaa.security import AuthConfig
             
-            config = SecurityConfig()
+            config = AuthConfig()
             assert not config.auth_enabled or config.auth_enabled == False
     
     @pytest.mark.unit
@@ -144,7 +144,7 @@ class TestSecurityConfiguration:
         """Default permissions are restrictive."""
         api_keys_str = '{"sk-default": {"agent_id": "unknown", "permission": "read_write"}}'
         
-        config = SecurityConfig(api_keys={"sk-default": {}})
+        config = AuthConfig(api_keys={"sk-default": {}})
         
         # Check permissions field exists
         if 'permission' in config.api_keys.get('sk-default', {}):
@@ -179,6 +179,11 @@ class TestStoragePathValidation:
         try:
             from cloud.storage.sqlite_memory_store import SQLiteMemoryStore
             
+            # Subdirectory doesn't exist, create it
+            Path(db_path).parent.mkdir(parents=True, exist_ok=True)
+            
+            store = SQLiteMemoryStore(db_path=db_path)
+            
             store = SQLiteMemoryStore(db_path=temp_path)
             count = store.count()
             
@@ -189,11 +194,17 @@ class TestStoragePathValidation:
     
     def test_directory_creation_for_dbs(self):
         """Database directories created if needed."""
+        import shutil
         temp_dir = tempfile.mkdtemp(prefix='cnaa_test_dir_')
         db_path = f'{temp_dir}/subdir/test.db'
         
         try:
             from cloud.storage.sqlite_memory_store import SQLiteMemoryStore
+            
+            # Subdirectory doesn't exist, create it
+            Path(db_path).parent.mkdir(parents=True, exist_ok=True)
+            
+            store = SQLiteMemoryStore(db_path=db_path)
             
             # Subdirectory doesn't exist
             store = SQLiteMemoryStore(db_path=db_path)
@@ -248,7 +259,7 @@ class TestBackwardCompatibility:
         
         with patch.dict(os.environ, legacy_vars, clear=False):
             # System should recognize these
-            from local.client.mcp_client import MCPClient
+            from local.client.mcp_client import CNAA_MCPClient as MCPClient
             
             client = MCPClient()
             assert client is not None

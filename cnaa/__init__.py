@@ -88,6 +88,15 @@ from cnaa.deprecation import (
     warn_deprecated,
 )
 
+# Security
+from cnaa.security import (
+    AuthConfig,
+    AuthContext,
+    PermissionLevel,
+    load_auth_config_from_env,
+    validate_api_key,
+)
+
 __all__ = [
     # Version
     "__version__",
@@ -135,4 +144,10 @@ __all__ = [
     "list_deprecated_items",
     "mark_deprecated",
     "warn_deprecated",
+    # Security
+    "AuthConfig",
+    "AuthContext",
+    "PermissionLevel",
+    "load_auth_config_from_env",
+    "validate_api_key",
 ]
