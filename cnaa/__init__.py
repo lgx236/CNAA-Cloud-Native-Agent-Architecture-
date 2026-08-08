@@ -1,29 +1,20 @@
-"""CNAA - Cloud Native Agentic Architecture.
+"""cnaa - Cloud Native Agent Architecture Core Package.
 
-Experience Runtime Framework for AI Agents.
-Provides agentic frameworks (e.g., openclow) with long-term memory
-capabilities: persistent experience, knowledge accumulation, and
-preference learning across sessions.
+This is the main entry point for CNAA, providing a clean, simple API for:
+- Memory management
+- State persistence  
+- Preference storage
+- MCP tool integration
+- Authentication & authorization
 
-Core specification: data models, interaction interfaces,
-MCP tool definitions, and lifecycle rules.
-
-This package IS the architecture specification.
-Cloud/ and local/ are reference implementations.
-
-Key Components:
-- models.py: Core data models (Memory, State, Preference, Environment)
-- schemas.py: Centralized JSON schema definitions (single source of truth)
-- interaction.py: Abstract interfaces for local-cloud interaction
-- tools.py: MCP tool definitions
-- lifecycle.py: Pluggable lifecycle interfaces for external packages
-
-Integration:
-Agentic frameworks integrate via LocalAgentInterface (local/agent.py)
-to gain long-term memory capabilities for their agents.
+The package follows the principle of simplicity: intuitive names, 
+minimal code, maximum clarity.
 """
 
-# Core version and API compatibility
+# ============================================================================
+# VERSION
+# ============================================================================
+
 __version__ = "1.0.0"
 API_VERSION = "v1"
 API_COMPATIBILITY_MATRIX = {
@@ -31,7 +22,10 @@ API_COMPATIBILITY_MATRIX = {
     "v0.2": {"status": "deprecated", "removal_date": "v1.2"}
 }
 
-# Core data models
+# ============================================================================
+# CORE DATA MODELS (Public API)
+# ============================================================================
+
 from cnaa.models import (
     Environment,
     InstantMemory,
@@ -45,7 +39,10 @@ from cnaa.models import (
     TaskCheckpoint,
 )
 
-# Schema definitions (single source of truth for JSON formats)
+# ============================================================================
+# SCHEMA DEFINITIONS (JSON Schema as Single Source of Truth)
+# ============================================================================
+
 from cnaa.schemas import (
     get_all_schemas,
     get_request_schemas,
@@ -53,10 +50,16 @@ from cnaa.schemas import (
     get_schema,
 )
 
-# Interaction interfaces
+# ============================================================================
+# INTERACTION INTERFACES (Abstract Base Classes)
+# ============================================================================
+
 from cnaa.interaction import MemoryInterface, StateInterface
 
-# Lifecycle plugins (for external package integration)
+# ============================================================================
+# LIFECYCLE PLUGINS (Extensibility Points)
+# ============================================================================
+
 from cnaa.lifecycle import (
     DefaultStateEvolutionPlugin,
     LifecycleConfig,
@@ -71,14 +74,20 @@ from cnaa.lifecycle import (
     TimeBasedLifecyclePlugin,
 )
 
-# MCP tool definitions
+# ============================================================================
+# MCP TOOL DEFINITIONS
+# ============================================================================
+
 from cnaa.tools import (
     get_tool_by_name,
     get_tool_definitions,
     get_tool_names,
 )
 
-# Deprecation management
+# ============================================================================
+# DEPRECATION MANAGEMENT
+# ============================================================================
+
 from cnaa.deprecation import (
     deprecated,
     get_deprecation_manager,
@@ -88,15 +97,10 @@ from cnaa.deprecation import (
     warn_deprecated,
 )
 
-# Error handling
-from cnaa.errors import (
-    CNAAError,
-    StorageError,
-    NotFoundError,
-    ValidationError,
-)
+# ============================================================================
+# AUTHENTICATION & SECURITY
+# ============================================================================
 
-# Security
 from cnaa.security import (
     AuthConfig,
     AuthContext,
@@ -105,22 +109,68 @@ from cnaa.security import (
     validate_api_key,
 )
 
+# ============================================================================
+# PUBLIC API EXPORTS (What users actually need to know about)
+# ============================================================================
+
 __all__ = [
-    # Version info
+    # Version
     "__version__",
     "API_VERSION",
+    "API_COMPATIBILITY_MATRIX",
     
-    # Core data models (what users need most)
+    # Data Models
     "Environment",
+    "InstantMemory",
     "Memory",
-    "Preference",
-    "State",
+    "MemoryStatus",
     "MemoryType",
+    "Preference",
+    "SearchResult",
+    "State",
     "StateCategory",
+    "TaskCheckpoint",
     
-    # Factory functions for storage
-    "create_storage_backend",
+    # Schemas
+    "get_all_schemas",
+    "get_request_schemas",
+    "get_response_schemas",
+    "get_schema",
     
-    # Authentication configuration
+    # Interfaces
+    "MemoryInterface",
+    "StateInterface",
+    
+    # Lifecycle
+    "DefaultStateEvolutionPlugin",
+    "LifecycleConfig",
+    "LifecycleEvent",
+    "LifecyclePlugins",
+    "MemoryLifecyclePlugin",
+    "RetrievalPlugin",
+    "SimpleTimeBasedCondensationPlugin",
+    "StateEvolutionPhase",
+    "StateEvolutionPlugin",
+    "StateEvolutionRule",
+    "TimeBasedLifecyclePlugin",
+    
+    # Tools
+    "get_tool_by_name",
+    "get_tool_definitions",
+    "get_tool_names",
+    
+    # Deprecation
+    "deprecated",
+    "get_deprecation_manager",
+    "is_deprecated",
+    "list_deprecated_items",
+    "mark_deprecated",
+    "warn_deprecated",
+    
+    # Security
     "AuthConfig",
+    "AuthContext",
+    "PermissionLevel",
+    "load_auth_config_from_env",
+    "validate_api_key",
 ]

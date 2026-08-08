@@ -1,6 +1,7 @@
 """Health check endpoint handler."""
 
 from server.base_handler import BaseRequestHandler
+from cnaa.config import get_config
 
 
 class HealthHandler(BaseRequestHandler):
@@ -18,31 +19,31 @@ class HealthHandler(BaseRequestHandler):
             self._send_error(404, "Not found")
     
     def _handle_health(self):
-        """Return simple health status."""
+        """Return simple health status using config."""
         import sqlite3
-        from pathlib import Path
         
-        # Check databases exist and are accessible
-        db_files = ["cnaa_data.db"]
+        config = get_config()
         
-        status = {
-            "status": "healthy",
+        # Check database accessibility
+        db_status = {config.database.db_path: "accessible"}
+        
+        try:
+            if config.database.storage_type == "sqlite":
+                conn = sqlite3.connect(config.database.db_path)
+                conn.execute("SELECT COUNT(*) FROM sqlite_master")
+                conn.close()
+        except Exception as e:
+            db_status[config.database.db_path] = f"error: {e}"
+            status = "degraded"
+        else:
+            status = "healthy"
+        
+        response = {
+            "status": status,
             "service": "CNAA Server v1.0.0",
-            "uptime": "running"
+            "uptime": "running",
+            "database": db_status,
+            "auth_enabled": config.auth.enabled
         }
         
-        # Verify database accessibility
-        for db_file in db_files:
-            if Path(db_file).exists():
-                try:
-                    conn = sqlite3.connect(db_file)
-                    conn.execute("SELECT COUNT(*) FROM sqlite_master")
-                    conn.close()
-                    status["databases"] = {db_file: "accessible"}
-                except Exception as e:
-                    status["status"] = "degraded"
-                    status["errors"] = [str(e)]
-            else:
-                status["databases"] = {db_file: "not_found"}
-        
-        self._send_json_response(200, status)
+        self._send_json_response(200, response)

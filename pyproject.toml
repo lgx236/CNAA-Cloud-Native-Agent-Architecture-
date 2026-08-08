@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "cnaa"
 version = "1.0.0"
 description = "Cloud Native Agentic Architecture - Experience Runtime Framework (Production Ready)"
-readme = "SELF_IMPROVEMENT_SUMMARY.md"
+readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "MIT"}
 dependencies = [
