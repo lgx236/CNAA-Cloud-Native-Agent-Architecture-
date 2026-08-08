@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cnaa"
-version = "0.2.0"
+version = "1.0.0"
 description = "Cloud Native Agentic Architecture - Experience Runtime Framework (Production Ready)"
 readme = "QUICK_START_V02.md"
 requires-python = ">=3.11"
@@ -13,9 +13,23 @@ dependencies = [
     "mcp>=1.0.0",
 ]
 
+[tool.coverage.run]
+source = ["cnaa", "cloud", "local"]
+branch = true
+omit = ["tests/*", "examples/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "@abstractmethod"
+]
+fail_under = 85
+
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0",
+    "pytest-cov>=4.0",
     "mypy>=1.0",
     "ruff>=0.1.0",
 ]

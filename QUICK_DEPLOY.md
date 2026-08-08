@@ -39,6 +39,8 @@ Should output: "✅ Connection test successful!" 🎉
 
 ---
 
+## Quick Start - Production Deployment (v1.0)
+
 ## Deploy Remote - Production Setup
 
 ### Step 1: Deploy on Cloud Server (VPS/EC2)

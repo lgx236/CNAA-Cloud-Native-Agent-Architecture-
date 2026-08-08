@@ -43,6 +43,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import asyncio
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any
@@ -55,6 +56,7 @@ from cnaa.security import (
     load_auth_config_from_env,
     validate_api_key,
 )
+from cnaa.monitoring import Monitor, HealthStatus
 
 # Configure logging with file rotation
 logger = logging.getLogger(__name__)
@@ -101,7 +103,12 @@ class CNAARequestHandler(BaseHTTPRequestHandler):
         if self.path == "/schemas":
             self._handle_schemas()
         elif self.path == "/health":
-            self._handle_health()
+            import asyncio
+            asyncio.run(self._handle_health())
+        elif self.path == "/metrics":
+            self._handle_metrics()
+        elif self.path == "/version":
+            self._handle_version()
         else:
             self._send_error(HTTPStatus.NOT_FOUND, "Not found")
     
@@ -118,8 +125,14 @@ class CNAARequestHandler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, schemas)
     
     def _handle_health(self) -> None:
-        """Handle GET /health - health check."""
-        self._send_json(HTTPStatus.OK, {"status": "healthy"})
+        """Handle GET /health - comprehensive health check."""
+        try:
+            monitor = Monitor()
+            status = asyncio.run(monitor.check_all_systems())
+            self._send_json(HTTPStatus.OK, status.summary())
+        except Exception as e:
+            logger.exception("Health check failed")
+            self._send_error(HTTPStatus.INTERNAL_SERVER_ERROR, str(e))
     
     def _handle_mcp(self) -> None:
         """Handle POST /mcp - MCP tool calls.
@@ -197,6 +210,31 @@ class CNAARequestHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", len(response.encode("utf-8")))
         self.end_headers()
         self.wfile.write(response.encode("utf-8"))
+    
+    def _handle_metrics(self) -> None:
+        """Handle GET /metrics - Prometheus metrics export."""
+        try:
+            from cnaa.metrics import collect_and_export
+            metrics_text = collect_and_export()
+            
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain; version=0.0.4")
+            self.send_header("Content-Length", len(metrics_text.encode("utf-8")))
+            self.end_headers()
+            self.wfile.write(metrics_text.encode("utf-8"))
+        except Exception as e:
+            logger.exception("Failed to export metrics")
+            self._send_error(HTTPStatus.INTERNAL_SERVER_ERROR, str(e))
+    
+    def _handle_version(self) -> None:
+        """Handle GET /version - API version info."""
+        from cnaa import __version__
+        version_info = {
+            "version": __version__,
+            "api_version": "v1",
+            "status": "production-ready"
+        }
+        self._send_json(HTTPStatus.OK, version_info)
     
     def _send_error(self, status: HTTPStatus, message: str) -> None:
         """Send error response.

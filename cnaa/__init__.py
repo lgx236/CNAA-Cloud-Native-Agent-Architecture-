@@ -23,7 +23,13 @@ Agentic frameworks integrate via LocalAgentInterface (local/agent.py)
 to gain long-term memory capabilities for their agents.
 """
 
-__version__ = "0.1.0"
+# Core version and API compatibility
+__version__ = "1.0.0"
+API_VERSION = "v1"
+API_COMPATIBILITY_MATRIX = {
+    "v1": {"status": "stable", "release_date": "2026-08"},
+    "v0.2": {"status": "deprecated", "removal_date": "v1.2"}
+}
 
 # Core data models
 from cnaa.models import (
@@ -75,6 +81,8 @@ from cnaa.tools import (
 __all__ = [
     # Version
     "__version__",
+    "API_VERSION",
+    "API_COMPATIBILITY_MATRIX",
     # Data models
     "Environment",
     "InstantMemory",
