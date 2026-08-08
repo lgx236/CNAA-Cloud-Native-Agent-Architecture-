@@ -227,7 +227,8 @@ class TestTimeoutScenarios:
         assert response.status_code != 408  # Shouldn't timeout
     
     @pytest.mark.unit
-    def test_slow_operation_interruption(self):
+    @pytest.mark.asyncio
+    async def test_slow_operation_interruption(self):
         """Slow operations can be interrupted."""
         import asyncio
         
