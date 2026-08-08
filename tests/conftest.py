@@ -4,15 +4,6 @@ import pytest
 import time
 from datetime import datetime
 
-def pytest_configure(config):
-    """Register custom markers once per session."""
-    config.addinivalue_line("markers", "slow: Slow running tests")
-    config.addinivalue_line("markers", "integration: Integration tests")
-    config.addinivalue_line("markers", "unit: Unit tests")
-    config.addinivalue_line("markers", "performance: Performance/benchmark tests")
-    config.addinivalue_line("markers", "large: Large-scale operations (>1000 ops)")
-    config.addinivalue_line("markers", "regression: Regression prevention tests")
-
 
 @pytest.fixture
 def random_agent_id():

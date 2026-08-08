@@ -1,4 +1,6 @@
-# Python
+# Git Ignore Rules
+
+## Python Files
 __pycache__/
 *.py[cod]
 *$py.class
@@ -20,33 +22,88 @@ wheels/
 .installed.cfg
 *.egg
 
-# Virtual environments
+## Virtual environments
 venv/
 ENV/
 env/
 
-# IDE
+## IDE and Editor files
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+.project
+.classpath
+.settings/
 
-# Testing
+## Testing and Coverage
 .pytest_cache/
 .coverage
 htmlcov/
+.tox/
+.nox/
 
-# Environment variables
+## Environment Variables
 .env
-.env.*
+.env.local
+.env.*.local
 !.env.example
+!.env.template
 
-# Database files and logs
+## Database Files
 *.db
 *.sqlite
-cnaa.log
-logs/
+*.db-shm
+*.db-wal
+cnaa_data.db
+cnaa_memories.db
+cnaa_states.db
 
-# Qoder
+## Log Files
+*.log
+logs/
+cnaa.log
+
+## Build Artifacts
+*.tar.gz
+*.zip
+dist/
+build/
+*.whl
+
+## Distribution Packages
+dist_packages/
+
+## Qoder Configuration
 .qoder/__pycache__/
+.qoder/cache/
+
+## Platform-specific files
+.DS_Store
+Thumbs.db
+
+## CI/CD and Workflow Files (if not tracked)
+.github/workflows/*.yml.lock
+
+## Development Tools
+*.orig
+*.bak
+*.tmp
+*.temp
+.cache/
+
+## Jupyter Notebooks
+.ipynb_checkpoints/
+
+## MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+## Ruff
+.ruff_cache/
+
+## Codecov
+.coverage.*
+coverage.xml
