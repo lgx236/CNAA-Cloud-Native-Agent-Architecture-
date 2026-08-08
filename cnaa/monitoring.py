@@ -146,9 +146,9 @@ class Monitor:
     async def _check_state_storage(self, status: HealthStatus):
         """Check state storage subsystem."""
         try:
-            from cloud.storage.sql_state_store import SQLStateStore
+            from cloud.storage.sql_state_store import SqliteStateStore
             
-            store = SQLStateStore()
+            store = SqliteStateStore()
             count = store.count()
             
             status.add_component("state_storage", "ok", f"{count} states")
@@ -161,11 +161,11 @@ class Monitor:
     def _check_auth_config(self, status: HealthStatus):
         """Check authentication configuration."""
         try:
-            from cnaa.security import SecurityConfig
+            from cnaa import AuthConfig
             
-            config = SecurityConfig()
+            config = AuthConfig()
             
-            if config.auth_enabled:
+            if config.enabled:
                 key_count = len(config.api_keys or {})
                 status.add_component("authentication", "active", f"{key_count} API keys")
                 
